@@ -70,6 +70,7 @@ namespace Ludopol
 
         public void OnLeaving()
         {
+            GiveKeyboardBack();
             if (_game == null)
             {
                 return;
@@ -81,6 +82,22 @@ namespace Ludopol
                 App.Database.SaveUserFields(_game);
                 App.Log("Notes saved for \"" + _game.Name + "\" (Windows field)");
             }
+        }
+
+        /// <summary>
+        /// The Windows field keeps Windows' keyboard focus even once the page is gone: the
+        /// window would then receive no key at all (no Page Down, no Backspace = Back). The
+        /// focus goes back to the WPF window, now and once the next page is shown.
+        /// </summary>
+        private static void GiveKeyboardBack()
+        {
+            Window window = MainWindow.Current;
+            System.Windows.Input.Keyboard.Focus(window);
+            window.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                window.Activate();
+                System.Windows.Input.Keyboard.Focus(window);
+            }), System.Windows.Threading.DispatcherPriority.Input);
         }
 
         /// <summary>The theme's colours and the interface's text size, read again each time (they can change).</summary>
