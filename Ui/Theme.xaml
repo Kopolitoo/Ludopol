@@ -64,7 +64,10 @@
                                               HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                               VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
                                 <ContentPresenter.Resources>
-                                    <!-- A text label wraps on several lines, centred: never cut. -->
+                                    <!-- A text label wraps on several lines, centred: never cut.
+                                         This only reaches the labels given as plain text (Content="…").
+                                         A TextBlock written in a page's XAML must set
+                                         TextWrapping="Wrap" itself. -->
                                     <Style TargetType="TextBlock">
                                         <Setter Property="TextWrapping" Value="Wrap" />
                                         <Setter Property="TextAlignment" Value="Center" />

@@ -32,7 +32,7 @@
                                     <Image Source="{Binding ImageUrl, TargetNullValue={x:Null}}" Stretch="UniformToFill" />
                                 </Grid>
                                 <!-- The name wraps on several lines: never cut. -->
-                                <TextBlock Text="{Binding Name}" Margin="0,8,0,6" FontSize="{DynamicResource SmallFontSize}" />
+                                <TextBlock Text="{Binding Name}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,8,0,6" FontSize="{DynamicResource SmallFontSize}" />
                                 <local:CompatibilityBar Level="{Binding Compatibility}" Height="16" />
                             </StackPanel>
                         </local:TileButton>
