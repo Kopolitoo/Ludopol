@@ -32,6 +32,14 @@ namespace Ludopol
         /// <summary>The last games sheet imported (settings page, "Import again").</summary>
         public string? LastImportPath { get; set; }
 
+        /// <summary>
+        /// Steam synchronisation (settings page): the Steam Web API key, created on
+        /// https://steamcommunity.com/dev/apikey, and the account chosen (SteamID64; empty: the
+        /// account most recently used in Steam on this computer). Keep the key to yourself.
+        /// </summary>
+        public string? SteamApiKey { get; set; }
+        public string? SteamAccountId { get; set; }
+
         /// <summary>Width and height of a game tile in the lists.</summary>
         public double TileWidth { get; set; } = 320;
         public double TileHeight { get; set; } = 300;

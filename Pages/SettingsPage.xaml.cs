@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -22,6 +23,12 @@ namespace Ludopol
 
         /// <summary>The result of the last search for installed games, shown until the page is left.</summary>
         private string? _installedSummary;
+
+        /// <summary>The result of the last Steam synchronisation, shown until the page is left.</summary>
+        private string? _steamSummary;
+        /// <summary>The owned games missing from the catalogue, found by the last synchronisation.</summary>
+        private List<OwnedGame>? _missingGames;
+        private bool _syncRunning;
 
         private static readonly int[] Delays = { 500, 750, 1000, 1500, 2000, 3000 };
 
@@ -46,6 +53,9 @@ namespace Ludopol
         {
             _importSummary = null;
             _installedSummary = null;
+            _steamSummary = null;
+            _missingGames = null;
+            AppSettings.Current.Save();   // the Steam key typed on the page
         }
 
         private void Build()
@@ -55,6 +65,7 @@ namespace Ludopol
 
             AddImportSection(settings);
             AddInstalledSection();
+            AddSteamSection(settings);
 
             AddTitle("settings.fullScreen");
             AddChoices(new[] { true, false }, v => Texts.Get(v ? "common.yes" : "common.no"),
@@ -179,6 +190,161 @@ namespace Ludopol
                 _installedSummary = Texts.Format("installed.error", ex.Message);
             }
             Build();
+        }
+
+        /// <summary>
+        /// "Steam library": the account, the Steam key, and "Synchronise with Steam" (see
+        /// Data/SteamSync.cs). After a synchronisation, a button adds the owned games missing
+        /// from the catalogue.
+        /// </summary>
+        private void AddSteamSection(AppSettings settings)
+        {
+            AddTitle("steamSync.title");
+
+            List<SteamAccount> accounts = GameLauncher.Steam.Accounts();
+            SteamAccount? account = CurrentAccount(accounts, settings);
+            if (accounts.Count == 0)
+            {
+                AddText(Texts.Get("steamSync.noAccount"), muted: true);
+            }
+            else if (accounts.Count == 1)
+            {
+                AddText(Texts.Format("steamSync.account", accounts[0].Name), muted: false);
+            }
+            else
+            {
+                AddText(Texts.Get("steamSync.chooseAccount"), muted: false);
+                AddChoices(accounts.Select(a => a.Id), id => accounts.First(a => a.Id == id).Name,
+                    account?.Id ?? "", id => settings.SteamAccountId = id);
+            }
+
+            AddText(Texts.Get("steamSync.key"), muted: false);
+            TextBox keyBox = new TextBox { Text = settings.SteamApiKey ?? "", Margin = new Thickness(12, 0, 12, 0) };
+            keyBox.TextChanged += (s, e) => settings.SteamApiKey = string.IsNullOrWhiteSpace(keyBox.Text) ? null : keyBox.Text.Trim();
+            Info.Children.Add(keyBox);
+
+            WrapPanel row = new WrapPanel();
+            TileButton keyPage = new TileButton { Content = Texts.Get("steamSync.keyPage") };
+            keyPage.SetResourceReference(WidthProperty, "WideButtonWidth");
+            keyPage.SetResourceReference(FontSizeProperty, "SmallFontSize");
+            keyPage.Click += (s, e) => OpenKeyPage();
+            row.Children.Add(keyPage);
+
+            TileButton sync = new TileButton
+            {
+                Content = Texts.Get(_syncRunning ? "steamSync.running" : "steamSync.run"),
+                IsEnabled = !_syncRunning && account != null,
+            };
+            sync.SetResourceReference(WidthProperty, "WideButtonWidth");
+            sync.Click += (s, e) => SyncSteam(account);
+            row.Children.Add(sync);
+
+            if (_missingGames != null && _missingGames.Count > 0)
+            {
+                TileButton add = new TileButton { Content = Texts.Format("steamSync.addMissing", _missingGames.Count) };
+                add.SetResourceReference(WidthProperty, "WideButtonWidth");
+                add.Click += (s, e) => AddMissingGames();
+                row.Children.Add(add);
+            }
+            Info.Children.Add(row);
+
+            if (_steamSummary != null)
+            {
+                AddText(_steamSummary, muted: false);
+            }
+        }
+
+        /// <summary>The account chosen in the settings, otherwise the one most recently used in Steam.</summary>
+        private static SteamAccount? CurrentAccount(List<SteamAccount> accounts, AppSettings settings) =>
+            accounts.FirstOrDefault(a => a.Id == settings.SteamAccountId) ?? accounts.FirstOrDefault();
+
+        private void OpenKeyPage()
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(SteamSync.ApiKeyPage) { UseShellExecute = true })?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                App.Log("Steam key page not opened: " + ex.Message);
+                _steamSummary = Texts.Format("steamSync.error", ex.Message);
+                Build();
+            }
+        }
+
+        private async void SyncSteam(SteamAccount? account)
+        {
+            AppSettings settings = AppSettings.Current;
+            if (account == null || _syncRunning)
+            {
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(settings.SteamApiKey))
+            {
+                _steamSummary = Texts.Get("steamSync.noKey");
+                Build();
+                return;
+            }
+            settings.Save();
+            _syncRunning = true;
+            _steamSummary = null;
+            _missingGames = null;
+            Build();
+            try
+            {
+                List<OwnedGame> owned = await SteamSync.GetOwnedGamesAsync(settings.SteamApiKey, account.Id);
+                SyncResult result = SteamSync.Apply(owned, App.Database);
+                _missingGames = result.Missing;
+                List<string> lines = new List<string>
+                {
+                    Texts.Format("steamSync.result", result.Owned, result.OwnedInCatalogue, result.Missing.Count),
+                };
+                if (result.Missing.Count > 0)
+                {
+                    const int shown = 30;
+                    string names = string.Join(", ", result.Missing.Take(shown).Select(g => g.Name));
+                    lines.Add(Texts.Format("steamSync.missing", result.Missing.Count > shown ? names + "…" : names));
+                }
+                _steamSummary = string.Join("\n", lines);
+            }
+            catch (Exception ex)
+            {
+                App.Log("Steam sync failed: " + ex);
+                _steamSummary = Texts.Format("steamSync.error", ex.Message);
+            }
+            _syncRunning = false;
+            Build();
+        }
+
+        private void AddMissingGames()
+        {
+            if (_missingGames == null)
+            {
+                return;
+            }
+            try
+            {
+                int added = SteamSync.AddMissing(_missingGames, App.Database);
+                GameLauncher.RefreshAll(App.Database);   // some of them may be installed
+                _steamSummary = Texts.Format("steamSync.added", added, Texts.Get("steamSync.newCategory"));
+            }
+            catch (Exception ex)
+            {
+                App.Log("Adding the Steam games failed: " + ex);
+                _steamSummary = Texts.Format("steamSync.error", ex.Message);
+            }
+            _missingGames = null;
+            Build();
+        }
+
+        private void AddText(string text, bool muted)
+        {
+            TextBlock block = new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(12, 0, 12, 12) };
+            if (muted)
+            {
+                block.Foreground = (System.Windows.Media.Brush)FindResource("MutedTextBrush");
+            }
+            Info.Children.Add(block);
         }
 
         private void ChooseAndImport()

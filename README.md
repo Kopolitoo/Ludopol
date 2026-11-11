@@ -9,7 +9,7 @@ les lancer.
 
 ## État
 
-Étape 4 : jeux installés et bouton « Jouer ». Au départ, le catalogue contient deux jeux
+Étape 5 : synchronisation avec la bibliothèque Steam (jeux achetés). Au départ, le catalogue contient deux jeux
 **fictifs** pour essayer l'interface ; ils sont retirés au premier import de la feuille.
 
 ## Importer la feuille de jeux
@@ -43,6 +43,28 @@ revient dans Ludopol (après une installation dans Steam, par exemple).
 - **« Choisir le programme du jeu… »** : pour un jeu hors Steam, ou pour lancer un jeu Steam
   autrement. On choisit un `.exe` ou un raccourci (`.lnk`, `.url`) ; le jeu compte alors comme
   installé tant que ce fichier existe.
+
+## Synchroniser avec Steam (jeux achetés)
+
+Les fichiers de Steam sur l'ordinateur ne disent que ce qui est installé. La liste des jeux
+achetés est demandée à Steam par Internet, dans Paramètres → « Bibliothèque Steam » :
+
+1. Le compte Steam est trouvé tout seul (le dernier utilisé dans Steam sur cet ordinateur ; s'il
+   y en a plusieurs, on choisit).
+2. Il faut une **clé Steam** (gratuite, une seule fois) : bouton « Obtenir ma clé Steam » → page
+   de Steam, nom de domaine au choix (par exemple `localhost`), puis copier la clé dans le champ
+   (ou la dicter). Elle est enregistrée dans `settings.json` : la garder pour soi.
+3. « Synchroniser avec Steam » : chaque jeu du catalogue qui a un numéro Steam passe à
+   « Possédé sur Steam » oui ou non ; les jeux sans numéro Steam gardent ce qui a été mis à la
+   main. Les jeux achetés absents du catalogue sont listés, et « Ajouter les N jeux manquants »
+   les ajoute (nom, numéro et image Steam) dans la catégorie « À trier (Steam) ». Un import de
+   la feuille complète ensuite ceux qui y sont.
+
+Si Steam ne donne pas la liste : dans Steam, Profil → Modifier le profil → Confidentialité,
+mettre « Détails des jeux » sur Public.
+
+Dans les listes, le filtre « Installés » passe par « Installés seulement » et « Pas installés » ;
+avec « Possédés sur Steam », on voit les jeux achetés mais pas installés.
 
 ## Compiler et lancer
 
@@ -80,6 +102,8 @@ qu'on peut aussi modifier à la main, Ludopol fermé :
 | `FontSize`, `TitleFontSize` | 28, 40 | Taille du texte et des titres. |
 | `HoverActivation` | `true` | Un bouton s'active seul quand le curseur reste dessus (mode mouvement de Prunel) ; une jauge jaune se remplit pendant le délai. `false` : clic seulement. |
 | `HoverDelayMs` | 1000 | Délai de l'activation au survol, en millisecondes. |
+| `SteamApiKey` | vide | Clé Steam pour la synchronisation des jeux achetés. |
+| `SteamAccountId` | vide | Compte Steam synchronisé (vide : le dernier utilisé sur l'ordinateur). |
 
 Les tailles sont en unités WPF (1/96 de pouce) : avec une mise à l'échelle Windows de 200 %,
 une unité fait 2 pixels de l'écran 4K.

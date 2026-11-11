@@ -108,7 +108,64 @@ namespace Ludopol
             return false;
         }
 
+        /// <summary>
+        /// The Steam accounts already used on this computer (config\loginusers.vdf), the most
+        /// recent first. Empty when Steam was not found.
+        /// </summary>
+        public List<SteamAccount> Accounts()
+        {
+            if (SteamFolder == null)
+            {
+                return new List<SteamAccount>();
+            }
+            string file = Path.Combine(SteamFolder, "config", "loginusers.vdf");
+            try
+            {
+                return File.Exists(file) ? ReadAccounts(File.ReadAllText(file)) : new List<SteamAccount>();
+            }
+            catch (Exception ex)
+            {
+                App.Log("Steam: loginusers.vdf not read: " + ex.Message);
+                return new List<SteamAccount>();
+            }
+        }
+
         // ----- Reading Steam's files -----
+
+        /// <summary>The accounts listed in loginusers.vdf, the most recent first.</summary>
+        public static List<SteamAccount> ReadAccounts(string vdfText)
+        {
+            List<SteamAccount> accounts = new List<SteamAccount>();
+            Dictionary<string, object> root = Vdf.Parse(vdfText);
+            if (!root.TryGetValue("users", out object? usersObject) || !(usersObject is Dictionary<string, object> users))
+            {
+                return accounts;
+            }
+            foreach (KeyValuePair<string, object> user in users)
+            {
+                if (!(user.Value is Dictionary<string, object> fields)
+                    || !ulong.TryParse(user.Key, NumberStyles.None, CultureInfo.InvariantCulture, out _))
+                {
+                    continue;
+                }
+                string name = Field(fields, "PersonaName") ?? Field(fields, "AccountName") ?? user.Key;
+                bool mostRecent = Field(fields, "MostRecent") == "1";
+                SteamAccount account = new SteamAccount(user.Key, name);
+                if (mostRecent)
+                {
+                    accounts.Insert(0, account);
+                }
+                else
+                {
+                    accounts.Add(account);
+                }
+            }
+            return accounts;
+        }
+
+        private static string? Field(Dictionary<string, object> fields, string key) =>
+            fields.TryGetValue(key, out object? value) && value is string text && text.Length > 0 ? text : null;
+
 
         /// <summary>The library folders listed in libraryfolders.vdf (old and new layout).</summary>
         public static List<string> ReadLibraryFolders(string vdfText)
@@ -327,5 +384,18 @@ namespace Ludopol
                 return null;
             }
         }
+    }
+
+    /// <summary>A Steam account used on this computer: its number (SteamID64) and its name.</summary>
+    internal sealed class SteamAccount
+    {
+        public SteamAccount(string id, string name)
+        {
+            Id = id;
+            Name = name;
+        }
+
+        public string Id { get; }
+        public string Name { get; }
     }
 }

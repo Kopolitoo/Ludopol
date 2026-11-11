@@ -74,7 +74,7 @@ namespace Ludopol
 
         private void OnInstalledFilterClick(object sender, RoutedEventArgs e)
         {
-            _filter.InstalledOnly = !_filter.InstalledOnly;
+            _filter.Installed = Next(YesNoSteps, _filter.Installed);
             ApplyFilter();
         }
 
@@ -110,8 +110,13 @@ namespace Ludopol
 
         private void UpdateFilterButtons()
         {
-            _installedFilter.Content = Texts.Get(_filter.InstalledOnly ? "filter.installed.only" : "filter.installed.all");
-            _installedFilter.IsSelected = _filter.InstalledOnly;
+            _installedFilter.Content = Texts.Get(_filter.Installed switch
+            {
+                true => "filter.installed.only",
+                false => "filter.installed.no",
+                null => "filter.installed.all",
+            });
+            _installedFilter.IsSelected = _filter.Installed.HasValue;
 
             _ownedFilter.Content = Texts.Get(_filter.OwnedOnSteam switch
             {

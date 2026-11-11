@@ -105,7 +105,8 @@ namespace Ludopol
         public string? Category { get; set; }
         public string? Tag { get; set; }
         public string? Developer { get; set; }
-        public bool InstalledOnly { get; set; }
+        /// <summary>true: installed games only; false: not installed; null: all.</summary>
+        public bool? Installed { get; set; }
         /// <summary>true: tried games only; false: not tried yet; null: all.</summary>
         public bool? Tried { get; set; }
         /// <summary>true: owned on Steam only; false: not owned; null: all.</summary>
