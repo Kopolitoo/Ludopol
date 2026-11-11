@@ -29,7 +29,7 @@ namespace Ludopol
             MainWindow.Current.Navigate(new ChoicePage(ChoiceKind.Developers));
 
         private void OnRecentClick(object sender, RoutedEventArgs e) =>
-            MainWindow.Current.Navigate(new GameListPage(new GameFilter { NewestFirst = true }, Texts.Get("home.recent")));
+            MainWindow.Current.Navigate(new GameListPage(new GameFilter { SortBy = SortBy.Added, Descending = true }, Texts.Get("home.recent")));
 
         private void OnAllClick(object sender, RoutedEventArgs e) =>
             MainWindow.Current.Navigate(new GameListPage(new GameFilter(), Texts.Get("home.all")));

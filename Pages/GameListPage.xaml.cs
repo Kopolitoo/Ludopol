@@ -31,6 +31,12 @@ namespace Ludopol
         private readonly TileButton _compatibilityFilter = new TileButton();
         private readonly TileButton _ratingFilter = new TileButton();
 
+        /// <summary>Right of the title: the sort criterion (a menu) and the direction (a toggle).</summary>
+        private readonly StackPanel _sortButtons = new StackPanel { Orientation = Orientation.Horizontal };
+        private readonly TileButton _sortByButton = new TileButton();
+        private readonly TileButton _sortOrderButton = new TileButton();
+        private int _count = -1;
+
         private readonly GameFilter _filter;
         private readonly string _title;
 
@@ -69,19 +75,29 @@ namespace Ludopol
             _categoryFilter.Click += OnCategoryFilterClick;
             _compatibilityFilter.Click += OnCompatibilityFilterClick;
             _ratingFilter.Click += OnRatingFilterClick;
+
+            foreach (TileButton button in new[] { _sortByButton, _sortOrderButton })
+            {
+                button.SetResourceReference(WidthProperty, "SideButtonWidth");
+                button.SetResourceReference(FontSizeProperty, "SmallFontSize");
+                _sortButtons.Children.Add(button);
+            }
+            _sortByButton.Click += OnSortByClick;
+            _sortOrderButton.Click += OnSortOrderClick;
         }
 
-        public string Title => _title;
+        /// <summary>The list's name and its number of games: "All the games (316)".</summary>
+        public string Title => _count < 0 ? _title : Texts.Format("list.titleCount", _title, _count);
 
         public UIElement? SideContent => _filters;
+
+        public UIElement? TitleContent => _sortButtons;
 
         /// <summary>Reads the games again: a change made on a game's page shows when coming back.</summary>
         public void OnShown()
         {
             UpdateFilterButtons();
-            List<Game> games = App.Database.GetGames(_filter);
-            Games.ItemsSource = games;
-            EmptyText.Visibility = games.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            ShowGames();
             if (_searchMode)
             {
                 // Ready for Prunel's keyboard or Dragon, without having to aim at the field.
@@ -93,11 +109,68 @@ namespace Ludopol
         private void OnSearchChanged(object sender, TextChangedEventArgs e)
         {
             _filter.Search = SearchBox.Text;
+            ShowGames();
+            Scroll.ScrollToTop();
+        }
+
+        /// <summary>Reads the games of the filter, shows them and their number in the title.</summary>
+        private void ShowGames()
+        {
             List<Game> games = App.Database.GetGames(_filter);
             Games.ItemsSource = games;
             EmptyText.Visibility = games.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-            Scroll.ScrollToTop();
+            _count = games.Count;
+            MainWindow.Current.RefreshTitle();
         }
+
+        // ----- Sort -----
+
+        private void OnSortByClick(object sender, RoutedEventArgs e)
+        {
+            List<MenuChoice> choices = new List<MenuChoice>();
+            foreach (SortBy sortBy in new[] { SortBy.Name, SortBy.Added, SortBy.Rating, SortBy.Compatibility })
+            {
+                SortBy chosen = sortBy;
+                choices.Add(new MenuChoice(SortName(chosen), chosen == _filter.SortBy, () =>
+                {
+                    if (chosen != _filter.SortBy)
+                    {
+                        // A new criterion starts in its natural direction: A to Z, the newest,
+                        // the best rated, the most compatible first.
+                        _filter.SortBy = chosen;
+                        _filter.Descending = chosen != SortBy.Name;
+                    }
+                }));
+            }
+            ShowMenu("sort.title", choices);
+        }
+
+        private void OnSortOrderClick(object sender, RoutedEventArgs e)
+        {
+            _filter.Descending = !_filter.Descending;
+            ApplyFilter();
+        }
+
+        private static string SortName(SortBy sortBy) => Texts.Get(sortBy switch
+        {
+            SortBy.Added => "sort.added",
+            SortBy.Rating => "sort.rating",
+            SortBy.Compatibility => "sort.compatibility",
+            _ => "sort.name",
+        });
+
+        /// <summary>The direction in words fitting the criterion: "A → Z", "Newest first"…</summary>
+        private string SortOrderText() => Texts.Get((_filter.SortBy, _filter.Descending) switch
+        {
+            (SortBy.Name, false) => "sort.name.ascending",
+            (SortBy.Name, true) => "sort.name.descending",
+            (SortBy.Added, false) => "sort.added.ascending",
+            (SortBy.Added, true) => "sort.added.descending",
+            (SortBy.Rating, false) => "sort.rating.ascending",
+            (SortBy.Rating, true) => "sort.rating.descending",
+            (_, false) => "sort.compatibility.ascending",
+            _ => "sort.compatibility.descending",
+        });
 
         private void OnClearSearchClick(object sender, RoutedEventArgs e)
         {
@@ -237,6 +310,9 @@ namespace Ludopol
                 ? Texts.Format(rating == 5 ? "filter.rating.five" : "filter.rating.atLeast", rating)
                 : Texts.Get("filter.rating.all");
             _ratingFilter.IsSelected = _filter.MinRating.HasValue;
+
+            _sortByButton.Content = Texts.Format("sort.by", SortName(_filter.SortBy));
+            _sortOrderButton.Content = SortOrderText();
         }
 
         /// <summary>The value after the current one in a list of steps, back to the first after the last.</summary>

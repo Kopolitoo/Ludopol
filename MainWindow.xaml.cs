@@ -15,6 +15,9 @@ namespace Ludopol
         /// <summary>The page's own buttons, shown in a column on the left (null: none).</summary>
         UIElement? SideContent { get; }
 
+        /// <summary>The page's buttons shown on the right of its title (null: none).</summary>
+        UIElement? TitleContent => null;
+
         /// <summary>Called each time the page is shown, including when coming back to it.</summary>
         void OnShown();
 
@@ -42,6 +45,55 @@ namespace Ludopol
             Current = this;
             ApplyWindowMode();
             ShowPage(new HomePage());
+            PreviewKeyDown += OnPreviewKeyDown;
+        }
+
+        /// <summary>
+        /// Keyboard shortcuts, everywhere except while typing in a text field:
+        /// Backspace = "Back"; Page Up / Page Down, Home / End, arrows = scroll the page
+        /// (see ScrollPanel.HandleKey).
+        /// </summary>
+        private void OnPreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (System.Windows.Input.Keyboard.FocusedElement is TextBox)
+            {
+                return;
+            }
+            if (e.Key == System.Windows.Input.Key.Back)
+            {
+                GoBack();
+                e.Handled = true;
+                return;
+            }
+            ScrollPanel? scroll = FindScrollPanel(PageHost);
+            if (scroll != null && scroll.HandleKey(e.Key))
+            {
+                e.Handled = true;
+            }
+        }
+
+        /// <summary>The first scrolling area shown in an element (the current page), or null.</summary>
+        private static ScrollPanel? FindScrollPanel(DependencyObject parent)
+        {
+            int count = System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < count; i++)
+            {
+                DependencyObject child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
+                if (child is ScrollPanel panel && panel.IsVisible)
+                {
+                    return panel;
+                }
+                if (child is UIElement element && !element.IsVisible)
+                {
+                    continue;
+                }
+                ScrollPanel? inner = FindScrollPanel(child);
+                if (inner != null)
+                {
+                    return inner;
+                }
+            }
+            return null;
         }
 
         /// <summary>
@@ -99,6 +151,13 @@ namespace Ludopol
             // Read after OnShown: a game's page knows its title once the game is read.
             TitleText.Text = (page as IPage)?.Title ?? "";
             SideHost.Content = (page as IPage)?.SideContent;
+            TitleExtras.Content = (page as IPage)?.TitleContent;
+        }
+
+        /// <summary>Shows the current page's title again (a list whose number of games changed).</summary>
+        public void RefreshTitle()
+        {
+            TitleText.Text = (_current as IPage)?.Title ?? "";
         }
 
         /// <summary>Goes straight back to the home page (the first page of the history).</summary>
