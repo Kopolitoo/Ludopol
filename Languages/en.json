@@ -109,5 +109,12 @@
   "steamSync.newCategory": "To sort (Steam)",
   "steamSync.added": "{0} games added in the category \"{1}\".",
   "steamSync.addedOne": "\"{0}\" added in the category \"{1}\".",
-  "steamSync.error": "The synchronisation failed: {0}"
+  "steamSync.error": "The synchronisation failed: {0}",
+  "settings.section.screen": "Screen and language",
+  "settings.section.sizes": "Sizes",
+  "settings.section.hover": "Hover",
+  "settings.section.catalogue": "Catalogue: import and installed games",
+  "steamSync.missingTitle": "Games bought, not in the catalogue",
+  "steamSync.seeMissing": "See the {0} games not in the catalogue",
+  "steamSync.noneMissing": "Every game bought is in the catalogue."
 }

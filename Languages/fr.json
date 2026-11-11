@@ -109,5 +109,12 @@
   "steamSync.newCategory": "À trier (Steam)",
   "steamSync.added": "{0} jeux ajoutés dans la catégorie « {1} ».",
   "steamSync.addedOne": "« {0} » ajouté dans la catégorie « {1} ».",
-  "steamSync.error": "La synchronisation a échoué : {0}"
+  "steamSync.error": "La synchronisation a échoué : {0}",
+  "settings.section.screen": "Écran et langue",
+  "settings.section.sizes": "Tailles",
+  "settings.section.hover": "Survol",
+  "settings.section.catalogue": "Catalogue : import et jeux installés",
+  "steamSync.missingTitle": "Jeux achetés pas dans le catalogue",
+  "steamSync.seeMissing": "Voir les {0} jeux pas dans le catalogue",
+  "steamSync.noneMissing": "Tous les jeux achetés sont dans le catalogue."
 }

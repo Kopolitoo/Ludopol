@@ -7,8 +7,26 @@ using System.Windows.Controls;
 
 namespace Ludopol
 {
+    /// <summary>The parts of the settings, each on its own page (no scrolling, except lists).</summary>
+    public enum SettingsSection
+    {
+        /// <summary>The first page: one big button per part.</summary>
+        Menu,
+        Screen,
+        Sizes,
+        Hover,
+        Catalogue,
+        Steam,
+        /// <summary>The owned Steam games missing from the catalogue (a list: it may scroll).</summary>
+        SteamMissing,
+    }
+
     /// <summary>
-    /// VIEW: the settings page, opened by "Settings" in the left column.
+    /// VIEW: the settings, opened by "Settings" in the left column.
+    ///
+    /// The first page (Menu) has one big button per part: screen and language, sizes, hover,
+    /// catalogue (import, installed games), Steam library. Each part is its own page, small
+    /// enough to fit on the screen without scrolling; "Back" returns to the menu.
     ///
     /// Each setting is a row of big buttons (Ui/ChoiceRow.cs). A choice is applied at once
     /// (sizes change on screen straight away) and saved in settings.json. Only the language
@@ -18,17 +36,23 @@ namespace Ludopol
     /// </summary>
     public partial class SettingsPage : UserControl, IPage
     {
+        private readonly SettingsSection _section;
+
         /// <summary>The summary of the last import, shown under its buttons until the page is left.</summary>
         private string? _importSummary;
 
         /// <summary>The result of the last search for installed games, shown until the page is left.</summary>
         private string? _installedSummary;
 
-        /// <summary>The result of the last Steam synchronisation, shown until the page is left.</summary>
+        /// <summary>The result of the last Steam synchronisation (or addition), shown until the page is left.</summary>
         private string? _steamSummary;
-        /// <summary>The owned games missing from the catalogue, found by the last synchronisation.</summary>
-        private List<OwnedGame>? _missingGames;
         private bool _syncRunning;
+
+        /// <summary>
+        /// The owned games missing from the catalogue, found by the last synchronisation, and
+        /// shown by the SteamMissing page. Kept while Ludopol runs.
+        /// </summary>
+        private static List<OwnedGame>? _missingGames;
 
         private static readonly int[] Delays = { 500, 750, 1000, 1500, 2000, 3000 };
 
@@ -38,12 +62,28 @@ namespace Ludopol
         private static readonly double[] ButtonSizes = { 120, 150, 180, 220 };
         private static readonly double[] TileWidths = { 260, 320, 400, 480 };
 
-        public SettingsPage()
+        /// <summary>The settings key of each part's name, in the order of the menu.</summary>
+        private static readonly (SettingsSection Section, string Key)[] Sections =
+        {
+            (SettingsSection.Screen, "settings.section.screen"),
+            (SettingsSection.Sizes, "settings.section.sizes"),
+            (SettingsSection.Hover, "settings.section.hover"),
+            (SettingsSection.Catalogue, "settings.section.catalogue"),
+            (SettingsSection.Steam, "steamSync.title"),
+            (SettingsSection.SteamMissing, "steamSync.missingTitle"),
+        };
+
+        public SettingsPage(SettingsSection section = SettingsSection.Menu)
         {
             InitializeComponent();
+            _section = section;
         }
 
-        public string Title => Texts.Get("settings.title");
+        public bool IsMenu => _section == SettingsSection.Menu;
+
+        public string Title => IsMenu
+            ? Texts.Get("settings.title")
+            : Texts.Get("settings.title") + " : " + Texts.Get(Sections.First(s => s.Section == _section).Key);
 
         public UIElement? SideContent => null;
 
@@ -54,7 +94,6 @@ namespace Ludopol
             _importSummary = null;
             _installedSummary = null;
             _steamSummary = null;
-            _missingGames = null;
             AppSettings.Current.Save();   // the Steam key typed on the page
         }
 
@@ -63,53 +102,88 @@ namespace Ludopol
             AppSettings settings = AppSettings.Current;
             Info.Children.Clear();
 
-            AddImportSection(settings);
-            AddInstalledSection();
-            AddSteamSection(settings);
+            switch (_section)
+            {
+                case SettingsSection.Menu:
+                    BuildMenu();
+                    break;
 
-            AddTitle("settings.fullScreen");
-            AddChoices(new[] { true, false }, v => Texts.Get(v ? "common.yes" : "common.no"),
-                settings.FullScreen, v =>
+                case SettingsSection.Screen:
+                    AddTitle("settings.fullScreen");
+                    AddChoices(new[] { true, false }, v => Texts.Get(v ? "common.yes" : "common.no"),
+                        settings.FullScreen, v =>
+                        {
+                            settings.FullScreen = v;
+                            MainWindow.Current.ApplyWindowMode();
+                        });
+
+                    AddTitle("settings.language");
+                    AddChoices(new[] { "fr", "en" }, code => code == "fr" ? "Français" : "English",
+                        settings.Language, code => settings.Language = code);
+                    AddText(Texts.Get("settings.languageNote"), muted: true);
+                    break;
+
+                case SettingsSection.Sizes:
+                    AddTitle("settings.fontSize");
+                    AddSizeChoices(FontSizes, settings.FontSize, size =>
+                    {
+                        settings.FontSize = size;
+                        settings.TitleFontSize = Math.Round(size * 1.43);
+                    });
+
+                    AddTitle("settings.buttonSize");
+                    AddSizeChoices(ButtonSizes, settings.ButtonMinSize, size => settings.ButtonMinSize = size);
+
+                    AddTitle("settings.tileSize");
+                    AddSizeChoices(TileWidths, settings.TileWidth, width =>
+                    {
+                        settings.TileWidth = width;
+                        settings.TileHeight = Math.Round(width * 0.94);
+                    });
+                    break;
+
+                case SettingsSection.Hover:
+                    AddTitle("settings.hoverActivation");
+                    AddChoices(new[] { true, false }, v => Texts.Get(v ? "common.yes" : "common.no"),
+                        settings.HoverActivation, v => settings.HoverActivation = v);
+
+                    AddTitle("settings.hoverDelay");
+                    AddChoices(Delays, ms => Texts.Format("settings.seconds", (ms / 1000.0).ToString("0.##", CultureInfo.CurrentCulture)),
+                        settings.HoverDelayMs, ms => settings.HoverDelayMs = ms);
+                    break;
+
+                case SettingsSection.Catalogue:
+                    AddImportSection(settings);
+                    AddInstalledSection();
+                    break;
+
+                case SettingsSection.Steam:
+                    AddSteamSection(settings);
+                    break;
+
+                case SettingsSection.SteamMissing:
+                    AddMissingList();
+                    break;
+            }
+        }
+
+        /// <summary>The first page: one big button per part of the settings.</summary>
+        private void BuildMenu()
+        {
+            WrapPanel row = new WrapPanel();
+            foreach ((SettingsSection section, string key) in Sections)
+            {
+                if (section == SettingsSection.SteamMissing)
                 {
-                    settings.FullScreen = v;
-                    MainWindow.Current.ApplyWindowMode();
-                });
-
-            AddTitle("settings.hoverActivation");
-            AddChoices(new[] { true, false }, v => Texts.Get(v ? "common.yes" : "common.no"),
-                settings.HoverActivation, v => settings.HoverActivation = v);
-
-            AddTitle("settings.hoverDelay");
-            AddChoices(Delays, ms => Texts.Format("settings.seconds", (ms / 1000.0).ToString("0.##", CultureInfo.CurrentCulture)),
-                settings.HoverDelayMs, ms => settings.HoverDelayMs = ms);
-
-            AddTitle("settings.fontSize");
-            AddSizeChoices(FontSizes, settings.FontSize, size =>
-            {
-                settings.FontSize = size;
-                settings.TitleFontSize = Math.Round(size * 1.43);
-            });
-
-            AddTitle("settings.buttonSize");
-            AddSizeChoices(ButtonSizes, settings.ButtonMinSize, size => settings.ButtonMinSize = size);
-
-            AddTitle("settings.tileSize");
-            AddSizeChoices(TileWidths, settings.TileWidth, width =>
-            {
-                settings.TileWidth = width;
-                settings.TileHeight = Math.Round(width * 0.94);
-            });
-
-            AddTitle("settings.language");
-            AddChoices(new[] { "fr", "en" }, code => code == "fr" ? "Français" : "English",
-                settings.Language, code => settings.Language = code);
-            Info.Children.Add(new TextBlock
-            {
-                Text = Texts.Get("settings.languageNote"),
-                TextWrapping = TextWrapping.Wrap,
-                Foreground = (System.Windows.Media.Brush)FindResource("MutedTextBrush"),
-                Margin = new Thickness(12, 0, 12, 24),
-            });
+                    continue;   // opened from the Steam page, after a synchronisation
+                }
+                TileButton button = new TileButton { Content = Texts.Get(key) };
+                button.SetResourceReference(WidthProperty, "WideButtonWidth");
+                button.SetResourceReference(HeightProperty, "WideButtonWidth");
+                button.Click += (s, e) => MainWindow.Current.Navigate(new SettingsPage(section));
+                row.Children.Add(button);
+            }
+            Info.Children.Add(row);
         }
 
         /// <summary>
@@ -246,7 +320,10 @@ namespace Ludopol
             }
             if (_missingGames != null && _missingGames.Count > 0)
             {
-                AddMissingList(_missingGames);
+                TileButton see = new TileButton { Content = Texts.Format("steamSync.seeMissing", _missingGames.Count) };
+                see.SetResourceReference(WidthProperty, "WideButtonWidth");
+                see.Click += (s, e) => MainWindow.Current.Navigate(new SettingsPage(SettingsSection.SteamMissing));
+                Info.Children.Add(new WrapPanel { Children = { see } });
             }
         }
 
@@ -254,8 +331,18 @@ namespace Ludopol
         /// The owned games missing from the catalogue, after a synchronisation: "Add all", then
         /// one button per game, which adds that game alone.
         /// </summary>
-        private void AddMissingList(List<OwnedGame> missing)
+        private void AddMissingList()
         {
+            if (_steamSummary != null)
+            {
+                AddText(_steamSummary, muted: false);
+            }
+            List<OwnedGame> missing = _missingGames ?? new List<OwnedGame>();
+            if (missing.Count == 0)
+            {
+                AddText(Texts.Get("steamSync.noneMissing"), muted: false);
+                return;
+            }
             TileButton addAll = new TileButton { Content = Texts.Format("steamSync.addMissing", missing.Count) };
             addAll.SetResourceReference(WidthProperty, "WideButtonWidth");
             addAll.Click += (s, e) => AddMissingGames(missing.ToList());

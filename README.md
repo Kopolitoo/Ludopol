@@ -14,7 +14,7 @@ les lancer.
 
 ## Importer la feuille de jeux
 
-Paramètres → « Choisir la feuille (.xlsx)… », puis choisir l'export Excel de la feuille Google
+Paramètres → « Catalogue » → « Choisir la feuille (.xlsx)… », puis choisir l'export Excel de la feuille Google
 (Fichier → Télécharger → Microsoft Excel). L'export CSV ne convient pas : il perd les liens Steam
 et les images.
 
@@ -29,7 +29,7 @@ et les images.
 
 ## Jouer
 
-Ludopol regarde quels jeux sont installés au démarrage, après un import, et avec Paramètres →
+Ludopol regarde quels jeux sont installés au démarrage, après un import, et avec Paramètres → « Catalogue » →
 « Rechercher les jeux installés ». La fiche d'un jeu vérifie aussi à chaque affichage, et quand on
 revient dans Ludopol (après une installation dans Steam, par exemple).
 
@@ -93,7 +93,8 @@ Dans `%LocalAppData%\Ludopol` :
 
 ## Réglages
 
-Le bouton « Paramètres » (colonne de gauche) règle au regard le plein écran, le survol, son délai, la taille
+Le bouton « Paramètres » (colonne de gauche) ouvre un menu de grandes cases (Écran et langue,
+Tailles, Survol, Catalogue, Bibliothèque Steam), chacune sur une page sans défilement. On y règle au regard le plein écran, le survol, son délai, la taille
 du texte, des boutons et des tuiles, et la langue. Tout est enregistré dans `settings.json`,
 qu'on peut aussi modifier à la main, Ludopol fermé :
 
