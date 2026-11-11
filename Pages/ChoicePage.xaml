@@ -9,7 +9,7 @@
     <UserControl.Resources>
         <!-- Category card: a picture, then the name and the number of games. -->
         <DataTemplate x:Key="CardTemplate">
-            <local:TileButton Width="{DynamicResource TileWidth}" Padding="10" Click="OnItemClick"
+            <local:TileButton Padding="10" Click="OnItemClick"
                               HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top">
                 <StackPanel>
                     <Grid Height="{DynamicResource TileImageHeight}" ClipToBounds="True">
@@ -21,7 +21,7 @@
                         <Image Source="{Binding ImageSource, TargetNullValue={x:Null}}" Stretch="UniformToFill" />
                     </Grid>
                     <TextBlock Text="{Binding Name}" TextWrapping="Wrap" TextAlignment="Center" FontWeight="SemiBold" Margin="0,10,0,0" />
-                    <TextBlock Text="{Binding CountText}" TextWrapping="Wrap" TextAlignment="Center" Foreground="{StaticResource MutedTextBrush}"
+                    <TextBlock Text="{Binding CountText}" TextWrapping="Wrap" TextAlignment="Center" Foreground="{DynamicResource MutedTextBrush}"
                                FontSize="{DynamicResource SmallFontSize}" Margin="0,4,0,0" />
                 </StackPanel>
             </local:TileButton>
@@ -29,10 +29,10 @@
 
         <!-- Tag or developer: text only. -->
         <DataTemplate x:Key="TextTemplate">
-            <local:TileButton Width="{DynamicResource TileWidth}" Click="OnItemClick">
+            <local:TileButton Click="OnItemClick">
                 <StackPanel>
                     <TextBlock Text="{Binding Name}" TextWrapping="Wrap" TextAlignment="Center" FontWeight="SemiBold" />
-                    <TextBlock Text="{Binding CountText}" TextWrapping="Wrap" TextAlignment="Center" Foreground="{StaticResource MutedTextBrush}"
+                    <TextBlock Text="{Binding CountText}" TextWrapping="Wrap" TextAlignment="Center" Foreground="{DynamicResource MutedTextBrush}"
                                FontSize="{DynamicResource SmallFontSize}" Margin="0,6,0,0" />
                 </StackPanel>
             </local:TileButton>
@@ -43,7 +43,7 @@
         <ItemsControl x:Name="Items">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <WrapPanel />
+                    <local:TileGrid ItemMinWidth="{DynamicResource TileSlotWidth}" />
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
         </ItemsControl>

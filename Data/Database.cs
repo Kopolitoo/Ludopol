@@ -215,6 +215,50 @@ namespace Ludopol
             return installed;
         }
 
+        /// <summary>
+        /// After a Steam synchronisation: every game with a Steam number gets "owned on Steam"
+        /// yes or no, according to the list. Games without a Steam number keep what was set by
+        /// hand. Returns how many games are owned, and the Steam numbers of the catalogue.
+        /// </summary>
+        public (int Owned, HashSet<long> CatalogueIds) UpdateOwned(HashSet<long> ownedIds)
+        {
+            int owned = 0;
+            HashSet<long> catalogueIds = new HashSet<long>();
+            using (SqliteConnection connection = Connect())
+            using (SqliteTransaction transaction = connection.BeginTransaction())
+            {
+                List<(long Id, bool Owned)> games = new List<(long, bool)>();
+                SqliteCommand read = connection.CreateCommand();
+                read.Transaction = transaction;
+                read.CommandText = "SELECT id, steam_app_id FROM games WHERE steam_app_id IS NOT NULL";
+                using (SqliteDataReader reader = read.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        long steamId = reader.GetInt64(1);
+                        catalogueIds.Add(steamId);
+                        bool isOwned = ownedIds.Contains(steamId);
+                        if (isOwned)
+                        {
+                            owned++;
+                        }
+                        games.Add((reader.GetInt64(0), isOwned));
+                    }
+                }
+                foreach ((long id, bool isOwned) in games)
+                {
+                    SqliteCommand update = connection.CreateCommand();
+                    update.Transaction = transaction;
+                    update.CommandText = "UPDATE games SET owned_on_steam = $owned WHERE id = $id";
+                    update.Parameters.AddWithValue("$owned", isOwned ? 1 : 0);
+                    update.Parameters.AddWithValue("$id", id);
+                    update.ExecuteNonQuery();
+                }
+                transaction.Commit();
+            }
+            return (owned, catalogueIds);
+        }
+
         /// <summary>Saves where a game is on this computer: installed, and the program chosen to start it (or null).</summary>
         public void SaveInstallation(Game game)
         {
@@ -344,9 +388,10 @@ namespace Ludopol
                     sql.Append(" AND g.developer = $developer");
                     command.Parameters.AddWithValue("$developer", filter.Developer);
                 }
-                if (filter.InstalledOnly)
+                if (filter.Installed.HasValue)
                 {
-                    sql.Append(" AND g.installed = 1");
+                    sql.Append(" AND g.installed = $installed");
+                    command.Parameters.AddWithValue("$installed", filter.Installed.Value ? 1 : 0);
                 }
                 if (filter.Tried.HasValue)
                 {
@@ -358,10 +403,10 @@ namespace Ludopol
                     sql.Append(" AND g.owned_on_steam = $owned");
                     command.Parameters.AddWithValue("$owned", filter.OwnedOnSteam.Value ? 1 : 0);
                 }
-                if (filter.MinCompatibility.HasValue)
+                if (filter.ExactCompatibility.HasValue)
                 {
-                    sql.Append(" AND g.compatibility >= $compatibility");
-                    command.Parameters.AddWithValue("$compatibility", (int)filter.MinCompatibility.Value);
+                    sql.Append(" AND g.compatibility = $compatibility");
+                    command.Parameters.AddWithValue("$compatibility", (int)filter.ExactCompatibility.Value);
                 }
                 if (filter.MinRating.HasValue)
                 {
@@ -377,6 +422,12 @@ namespace Ludopol
                         games.Add(ReadGame(reader));
                     }
                 }
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.Search))
+            {
+                string wanted = Simplify(filter.Search);
+                games = games.Where(g => Simplify(g.Name).Contains(wanted)).ToList();
             }
 
             return filter.NewestFirst
@@ -437,6 +488,21 @@ namespace Ludopol
                 .OrderBy(c => c.Name, NameOrder).ToList();
 
         // ----- Helpers -----
+
+        /// <summary>A text without case, accents or extra spaces, to compare names: "Échecs " → "echecs".</summary>
+        public static string Simplify(string text)
+        {
+            string decomposed = text.Trim().ToLowerInvariant().Normalize(NormalizationForm.FormD);
+            StringBuilder simple = new StringBuilder(decomposed.Length);
+            foreach (char c in decomposed)
+            {
+                if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                {
+                    simple.Append(c);
+                }
+            }
+            return simple.ToString().Normalize(NormalizationForm.FormC);
+        }
 
         /// <summary>Writes a game's categories and tags (tags in Steam's order).</summary>
         private static void InsertNames(SqliteConnection connection, SqliteTransaction transaction, Game game)

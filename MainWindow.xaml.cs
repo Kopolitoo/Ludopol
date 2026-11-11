@@ -120,7 +120,7 @@ namespace Ludopol
 
         private void OnSettingsClick(object sender, RoutedEventArgs e)
         {
-            if (_current is not SettingsPage)
+            if (_current is not SettingsPage { IsMenu: true })
             {
                 Navigate(new SettingsPage());
             }

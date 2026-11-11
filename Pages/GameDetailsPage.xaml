@@ -18,7 +18,7 @@
 
                 <StackPanel Width="{DynamicResource TileWidth}" Margin="12" VerticalAlignment="Top">
                     <Grid Height="{DynamicResource TileHeight}" ClipToBounds="True">
-                        <Border Background="{StaticResource PlaceholderBrush}" CornerRadius="10">
+                        <Border Background="{DynamicResource PlaceholderBrush}" CornerRadius="10">
                             <TextBlock x:Name="InitialsText" FontSize="{DynamicResource TitleFontSize}"
                                        HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
@@ -31,7 +31,7 @@
             </Grid>
         </local:ScrollPanel>
 
-        <Grid x:Name="PlayPanel" Visibility="Collapsed" Background="#E61E1E24">
+        <Grid x:Name="PlayPanel" Visibility="Collapsed" Background="{DynamicResource OverlayBrush}">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <TextBlock x:Name="PlayQuestion" FontSize="{DynamicResource TitleFontSize}"
                            TextWrapping="Wrap" TextAlignment="Center" Margin="12,0,12,24" />
@@ -43,5 +43,8 @@
                 </StackPanel>
             </StackPanel>
         </Grid>
+
+        <!-- The menus of compatibility and rating (Ui/ChoiceMenu.cs). -->
+        <local:ChoiceMenu x:Name="ChoiceMenu" />
     </Grid>
 </UserControl>

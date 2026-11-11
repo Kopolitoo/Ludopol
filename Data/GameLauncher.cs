@@ -82,6 +82,29 @@ namespace Ludopol
             Open("steam://install/" + game.SteamAppId.Value.ToString(CultureInfo.InvariantCulture), null);
         }
 
+        /// <summary>
+        /// Opens the game's page in the Steam store (in Steam, to buy it there), or in the web
+        /// browser when Steam is not installed.
+        /// </summary>
+        public static void OpenSteamStore(Game game)
+        {
+            if (!game.SteamAppId.HasValue)
+            {
+                return;
+            }
+            string id = game.SteamAppId.Value.ToString(CultureInfo.InvariantCulture);
+            App.Log("Steam store page of \"" + game.Name + "\" (" + id + ")");
+            try
+            {
+                Open("steam://store/" + id, null);
+            }
+            catch (Exception ex)
+            {
+                App.Log("Steam not opened (" + ex.Message + "), web page instead");
+                Open("https://store.steampowered.com/app/" + id + "/", null);
+            }
+        }
+
         public static bool ProgramExists(string? target) => !string.IsNullOrWhiteSpace(target) && File.Exists(target);
 
         /// <summary>Opens a file or an address as a double click would (shortcuts and steam:// included).</summary>

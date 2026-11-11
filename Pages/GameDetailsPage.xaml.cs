@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -10,14 +11,16 @@ namespace Ludopol
     /// VIEW: the page of one game.
     ///
     /// Under the image (BuildActions): "Play" when the game is installed (with a confirmation,
-    /// see PlayPanel), otherwise "Install with Steam" for a Steam game; and "Choose the
-    /// program" for a game outside Steam, or to start a Steam game another way. Whether the
+    /// see PlayPanel), otherwise "Install with Steam" for a game bought on Steam; "See the
+    /// game in the Steam store" for every game on Steam; and "Choose the program" for a game
+    /// not bought on Steam. Whether the
     /// game is installed is checked again each time the page is shown and each time Ludopol
     /// comes back to the front (after an installation in Steam, for example).
     ///
-    /// The right part is built in code (BuildInfo), section by section. Each choice
-    /// (compatibility, owned on Steam, tried, rating, to publish) is a row of big buttons; the chosen one is
-    /// blue. A choice is saved in the database at once. "My notes" is an ordinary text field
+    /// The right part is built in code (BuildInfo), section by section. What I note fits on
+    /// one row: compatibility and rating open a menu (Ui/ChoiceMenu.cs), owned on Steam,
+    /// tried and to publish switch at each activation (blue = yes). A change is saved in the
+    /// database at once. "My notes" is an ordinary text field
     /// (Prunel's keyboard, Dragon): it is saved when the page is left.
     /// </summary>
     public partial class GameDetailsPage : UserControl, IPage
@@ -53,6 +56,7 @@ namespace Ludopol
             BuildActions(_game);
             BuildInfo(_game);
             Application.Current.Activated += OnAppActivated;
+            CompleteFromSteam(_game);
         }
 
         /// <summary>Saves my notes if they changed.</summary>
@@ -60,6 +64,7 @@ namespace Ludopol
         {
             Application.Current.Activated -= OnAppActivated;
             PlayPanel.Visibility = Visibility.Collapsed;
+            ChoiceMenu.Hide();
             _actionMessage = null;
             SaveNotes();
         }
@@ -76,6 +81,58 @@ namespace Ludopol
                 _game.Notes = notes;
                 App.Database.SaveUserFields(_game);
             }
+        }
+
+        /// <summary>
+        /// A Steam game without a description (added from Steam): its description, tags… are
+        /// fetched from the Steam store, and the page is redrawn when they arrive.
+        /// </summary>
+        private async void CompleteFromSteam(Game game)
+        {
+            if (!SteamStore.NeedsDetails(game))
+            {
+                return;
+            }
+            try
+            {
+                if (await SteamStore.CompleteAsync(game, App.Database) && _game == game && IsLoaded)
+                {
+                    ShowImage(game);
+                    double offset = Scroll.Viewer.VerticalOffset;
+                    BuildInfo(game);
+                    Scroll.Viewer.ScrollToVerticalOffset(offset);
+                }
+            }
+            catch (Exception ex)
+            {
+                App.Log("Steam store: \"" + game.Name + "\" not completed: " + ex.Message);
+            }
+        }
+
+        /// <summary>"Complete from Steam": asks the store now, then says what happened under the buttons.</summary>
+        private async void CompleteFromSteamNow(Game game)
+        {
+            _actionMessage = Texts.Get("details.completing");
+            BuildActions(game);
+            try
+            {
+                bool changed = await SteamStore.CompleteAsync(game, App.Database);
+                _actionMessage = Texts.Get(changed ? "details.completed" : "details.nothingToComplete");
+            }
+            catch (Exception ex)
+            {
+                App.Log("Steam store: \"" + game.Name + "\" not completed: " + ex.Message);
+                _actionMessage = Texts.Format("play.error", ex.Message);
+            }
+            if (_game != game || !IsLoaded)
+            {
+                return;
+            }
+            ShowImage(game);
+            BuildActions(game);
+            double offset = Scroll.Viewer.VerticalOffset;
+            BuildInfo(game);
+            Scroll.Viewer.ScrollToVerticalOffset(offset);
         }
 
         // ----- Play, install, choose the program -----
@@ -129,7 +186,7 @@ namespace Ludopol
             else
             {
                 AddActionText(Texts.Get("details.notInstalled"), muted: true);
-                if (game.SteamAppId.HasValue)
+                if (game.SteamAppId.HasValue && game.OwnedOnSteam)
                 {
                     TileButton install = AddAction("details.installWithSteam");
                     install.Click += (s, e) => RunAction(() =>
@@ -140,9 +197,27 @@ namespace Ludopol
                 }
             }
 
-            TileButton choose = AddAction("details.chooseProgram");
-            choose.SetResourceReference(FontSizeProperty, "SmallFontSize");
-            choose.Click += (s, e) => ChooseProgram(game);
+            // A game on Steam: its store page (to buy it, or to read about it).
+            if (game.SteamAppId.HasValue)
+            {
+                TileButton store = AddAction("details.steamStore");
+                store.SetResourceReference(FontSizeProperty, "SmallFontSize");
+                store.Click += (s, e) => RunAction(() => GameLauncher.OpenSteamStore(game));
+
+                // Fills what is missing (description, tags…) from the Steam store; replaces nothing.
+                TileButton complete = AddAction("details.completeFromSteam");
+                complete.SetResourceReference(FontSizeProperty, "SmallFontSize");
+                complete.Click += (s, e) => CompleteFromSteamNow(game);
+            }
+
+            // Choosing a program is for games outside Steam: not offered for a game bought on
+            // Steam (a program already chosen can still be removed).
+            if (!game.OwnedOnSteam)
+            {
+                TileButton choose = AddAction("details.chooseProgram");
+                choose.SetResourceReference(FontSizeProperty, "SmallFontSize");
+                choose.Click += (s, e) => ChooseProgram(game);
+            }
             if (!string.IsNullOrEmpty(game.LaunchTarget))
             {
                 AddActionText(Texts.Format("details.program", game.LaunchTarget), muted: true);
@@ -236,7 +311,7 @@ namespace Ludopol
             TextBlock block = new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(12, 12, 12, 0) };
             if (muted)
             {
-                block.Foreground = (System.Windows.Media.Brush)FindResource("MutedTextBrush");
+                block.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
             }
             Actions.Children.Add(block);
         }
@@ -267,40 +342,49 @@ namespace Ludopol
             Info.Children.Clear();
 
             // --- What Steam says about the game ---
-            AddLine(string.Join("  ·  ", NonEmpty(game.Developer, game.ReleaseDate, game.Price)), muted: true);
+            AddLine(string.Join("  ·  ", NonEmpty(game.ReleaseDate, game.Price)), muted: true);
             AddLine(game.Description ?? Texts.Get("details.noDescription"));
-            if (game.Categories.Count > 0)
-            {
-                AddTitle("details.categories");
-                AddLine(string.Join("  ·  ", game.Categories));
-            }
+            // Categories, tags and developer are buttons: each one opens the list of its games.
+            // Categories: always shown, with "Change the categories" at the end of the row.
+            AddTitle("details.categories");
+            AddLinks(game.Categories, name => new GameFilter { Category = name });
+            TileButton editCategories = MenuButton(Texts.Get("details.editCategories"), EditCategories);
+            ((WrapPanel)Info.Children[Info.Children.Count - 1]).Children.Add(editCategories);
             if (game.Tags.Count > 0)
             {
                 AddTitle("details.tags");
-                AddLine(string.Join("  ·  ", game.Tags));
+                AddLinks(game.Tags, name => new GameFilter { Tag = name });
+            }
+            if (!string.IsNullOrWhiteSpace(game.Developer))
+            {
+                AddTitle("details.developer");
+                AddLinks(new[] { game.Developer }, name => new GameFilter { Developer = name });
             }
 
-            // --- What I note ---
-            AddTitle("details.compatibility");
-            Info.Children.Add(new CompatibilityBar { Level = game.Compatibility, Height = 24, Margin = new Thickness(12, 12, 12, 0) });
-            AddChoices(new[]
+            // --- What I note: one row of buttons ---
+            // Yes/no fields switch at each activation (blue = yes); compatibility and rating
+            // open a menu (Ui/ChoiceMenu.cs).
+            AddTitle("details.mine");
+            WrapPanel row = new WrapPanel();
+            row.Children.Add(MenuButton(new StackPanel
             {
-                Compatibility.Unknown, Compatibility.None, Compatibility.PartialWithSwitch,
-                Compatibility.PartialGaze, Compatibility.Full,
-            }, CompatibilityTexts.Name, game.Compatibility, value => game.Compatibility = value);
-
-            AddTitle("details.ownedOnSteam");
-            AddChoices(new[] { true, false }, YesNo, game.OwnedOnSteam, value => game.OwnedOnSteam = value);
-
-            AddTitle("details.tried");
-            AddChoices(new[] { true, false }, YesNo, game.Tried, value => game.Tried = value);
-
-            AddTitle("details.rating");
-            AddChoices(new int?[] { null, 1, 2, 3, 4, 5 },
-                value => value?.ToString() ?? Texts.Get("details.rating.none"), game.Rating, value => game.Rating = value);
-
-            AddTitle("details.toPublish");
-            AddChoices(new[] { true, false }, YesNo, game.ToPublish, value => game.ToPublish = value);
+                Children =
+                {
+                    new TextBlock
+                    {
+                        Text = Field("details.compatibility", CompatibilityTexts.Name(game.Compatibility)),
+                        TextWrapping = TextWrapping.Wrap,
+                        TextAlignment = TextAlignment.Center,
+                    },
+                    new CompatibilityBar { Level = game.Compatibility, Height = 16, Margin = new Thickness(0, 10, 0, 0) },
+                },
+            }, ShowCompatibilityMenu));
+            row.Children.Add(MenuButton(
+                Field("details.rating", game.Rating?.ToString() ?? Texts.Get("details.rating.none")), ShowRatingMenu));
+            row.Children.Add(Toggle("details.ownedOnSteam", game.OwnedOnSteam, () => game.OwnedOnSteam = !game.OwnedOnSteam));
+            row.Children.Add(Toggle("details.tried", game.Tried, () => game.Tried = !game.Tried));
+            row.Children.Add(Toggle("details.toPublish", game.ToPublish, () => game.ToPublish = !game.ToPublish));
+            Info.Children.Add(row);
 
             AddTitle("details.notes");
             _notesBox = new TextBox
@@ -313,25 +397,130 @@ namespace Ludopol
             Info.Children.Add(_notesBox);
         }
 
-        /// <summary>
-        /// A row of big buttons for one of my fields (see Ui/ChoiceRow.cs). Choosing a value
-        /// saves it at once and redraws the page.
-        /// </summary>
-        private void AddChoices<T>(IEnumerable<T> values, Func<T, string> label, T current, Action<T> apply)
+        /// <summary>A yes/no field: one button, blue when yes; each activation switches it.</summary>
+        private TileButton Toggle(string nameKey, bool value, Action change)
         {
-            Info.Children.Add(ChoiceRow.Create(values, label, current, value =>
+            TileButton button = MenuButton(Field(nameKey, YesNo(value)), () => SaveChange(change));
+            button.IsSelected = value;
+            return button;
+        }
+
+        private TileButton MenuButton(object content, Action onClick)
+        {
+            TileButton button = new TileButton { Content = content };
+            button.SetResourceReference(WidthProperty, "WideButtonWidth");
+            button.SetResourceReference(FontSizeProperty, "SmallFontSize");
+            button.Click += (s, e) => onClick();
+            return button;
+        }
+
+        private void ShowCompatibilityMenu()
+        {
+            if (_game == null)
             {
-                if (_game == null)
+                return;
+            }
+            Game game = _game;
+            List<MenuChoice> choices = new List<MenuChoice>();
+            foreach (Compatibility level in new[]
+            {
+                Compatibility.Full, Compatibility.PartialGaze, Compatibility.PartialWithSwitch,
+                Compatibility.Presumed, Compatibility.Unknown, Compatibility.None,
+            })
+            {
+                StackPanel content = new StackPanel
                 {
-                    return;
+                    Children =
+                    {
+                        new TextBlock { Text = CompatibilityTexts.Name(level), TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center },
+                        new CompatibilityBar { Level = level, Height = 16, Margin = new Thickness(0, 10, 0, 0) },
+                    },
+                };
+                choices.Add(new MenuChoice(content, level == game.Compatibility, () => game.Compatibility = level));
+            }
+            ChoiceMenu.Show(Texts.Get("details.compatibility"), choices, () => SaveChange(() => { }));
+        }
+
+        /// <summary>
+        /// Choosing the game's categories among those of the catalogue (or a new one). Choosing
+        /// a real category takes the game out of "To sort (Steam)".
+        /// </summary>
+        private void EditCategories()
+        {
+            if (_game == null)
+            {
+                return;
+            }
+            Game game = _game;
+            string toSort = Texts.Get("steamSync.newCategory");
+            List<string> names = App.Database.GetCategories().Select(c => c.Name).ToList();
+            ChoiceMenu.ShowSeveral(Texts.Get("details.editCategories"), names, game.Categories, chosen =>
+            {
+                if (chosen.Any(c => c != toSort))
+                {
+                    chosen.Remove(toSort);
                 }
-                apply(value);
-                SaveNotes();   // keeps the notes typed so far
-                App.Database.SaveUserFields(_game);
-                double offset = Scroll.Viewer.VerticalOffset;
-                BuildInfo(_game);
-                Scroll.Viewer.ScrollToVerticalOffset(offset);
-            }));
+                SaveCategories(game, chosen);
+            });
+        }
+
+        private void SaveCategories(Game game, List<string> categories)
+        {
+            SaveNotes();
+            game.Categories = categories;
+            App.Database.UpdateFromImport(game);   // saves the game with its categories and tags
+            double offset = Scroll.Viewer.VerticalOffset;
+            BuildInfo(game);
+            Scroll.Viewer.ScrollToVerticalOffset(offset);
+        }
+
+        private void ShowRatingMenu()
+        {
+            if (_game == null)
+            {
+                return;
+            }
+            Game game = _game;
+            List<MenuChoice> choices = new List<MenuChoice>();
+            foreach (int? rating in new int?[] { null, 1, 2, 3, 4, 5 })
+            {
+                choices.Add(new MenuChoice(rating?.ToString() ?? Texts.Get("details.rating.none"),
+                    rating == game.Rating, () => game.Rating = rating));
+            }
+            ChoiceMenu.Show(Texts.Get("details.rating"), choices, () => SaveChange(() => { }));
+        }
+
+        /// <summary>Changes one of my fields, saves it at once and redraws the page.</summary>
+        private void SaveChange(Action change)
+        {
+            if (_game == null)
+            {
+                return;
+            }
+            change();
+            SaveNotes();   // keeps the notes typed so far
+            App.Database.SaveUserFields(_game);
+            double offset = Scroll.Viewer.VerticalOffset;
+            BuildInfo(_game);
+            Scroll.Viewer.ScrollToVerticalOffset(offset);
+        }
+
+        /// <summary>"Name : value", in the interface language.</summary>
+        private static string Field(string nameKey, string value) => Texts.Format("details.field", Texts.Get(nameKey), value);
+
+        /// <summary>A row of buttons, one per name; each opens the list of the games with that name.</summary>
+        private void AddLinks(IEnumerable<string> names, Func<string, GameFilter> filter)
+        {
+            WrapPanel row = new WrapPanel();
+            foreach (string name in names)
+            {
+                TileButton button = new TileButton { Content = name };
+                button.SetResourceReference(MaxWidthProperty, "WideButtonWidth");
+                button.SetResourceReference(FontSizeProperty, "SmallFontSize");
+                button.Click += (s, e) => MainWindow.Current.Navigate(new GameListPage(filter(name), name));
+                row.Children.Add(button);
+            }
+            Info.Children.Add(row);
         }
 
         private void AddTitle(string key)
@@ -348,7 +537,7 @@ namespace Ludopol
             TextBlock block = new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(12, 12, 12, 0) };
             if (muted)
             {
-                block.Foreground = (System.Windows.Media.Brush)FindResource("MutedTextBrush");
+                block.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
             }
             Info.Children.Add(block);
         }

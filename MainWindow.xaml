@@ -5,8 +5,8 @@
         Title="Ludopol"
         Width="1600" Height="1000"
         WindowStartupLocation="CenterScreen"
-        Background="{StaticResource BackgroundBrush}"
-        Foreground="{StaticResource TextBrush}"
+        Background="{DynamicResource BackgroundBrush}"
+        Foreground="{DynamicResource TextBrush}"
         FontFamily="Segoe UI"
         FontSize="{DynamicResource BaseFontSize}">
     <!--
@@ -27,7 +27,7 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <Grid Width="{DynamicResource SideButtonWidth}">
+            <Grid Width="{DynamicResource SideColumnWidth}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
@@ -55,7 +55,7 @@
             </Grid>
         </Grid>
 
-        <Grid x:Name="QuitPanel" Visibility="Collapsed" Background="#E61E1E24">
+        <Grid x:Name="QuitPanel" Visibility="Collapsed" Background="{DynamicResource OverlayBrush}">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <TextBlock Text="{local:Tr quit.question}" FontSize="{DynamicResource TitleFontSize}"
                            HorizontalAlignment="Center" Margin="0,0,0,24" />

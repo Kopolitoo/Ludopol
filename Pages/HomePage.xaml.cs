@@ -33,5 +33,8 @@ namespace Ludopol
 
         private void OnAllClick(object sender, RoutedEventArgs e) =>
             MainWindow.Current.Navigate(new GameListPage(new GameFilter(), Texts.Get("home.all")));
+
+        private void OnSearchClick(object sender, RoutedEventArgs e) =>
+            MainWindow.Current.Navigate(new GameListPage(new GameFilter(), Texts.Get("home.search"), searchMode: true));
     }
 }

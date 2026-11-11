@@ -5,8 +5,7 @@ namespace Ludopol
 {
     /// <summary>
     /// How well a game can be played with the eyetracker. The numbers are stored in the
-    /// database and go from worst to best (Unknown aside): a filter "at least X" keeps
-    /// the values >= X.
+    /// database: never change them (Presumed came later, hence 5).
     /// </summary>
     public enum Compatibility
     {
@@ -17,6 +16,11 @@ namespace Ludopol
         /// <summary>Partial: playable with the eyes, but with complex actions.</summary>
         PartialGaze = 3,
         Full = 4,
+        /// <summary>
+        /// Presumed: the game is in my list of games said to be playable with the eyes (the
+        /// imported sheet), but I have not tried it yet. Not in the worst → best order.
+        /// </summary>
+        Presumed = 5,
     }
 
     /// <summary>
@@ -105,15 +109,18 @@ namespace Ludopol
         public string? Category { get; set; }
         public string? Tag { get; set; }
         public string? Developer { get; set; }
-        public bool InstalledOnly { get; set; }
+        /// <summary>true: installed games only; false: not installed; null: all.</summary>
+        public bool? Installed { get; set; }
         /// <summary>true: tried games only; false: not tried yet; null: all.</summary>
         public bool? Tried { get; set; }
         /// <summary>true: owned on Steam only; false: not owned; null: all.</summary>
         public bool? OwnedOnSteam { get; set; }
-        /// <summary>Keeps the games at least this compatible (Unknown is then excluded).</summary>
-        public Compatibility? MinCompatibility { get; set; }
+        /// <summary>Keeps the games with exactly this compatibility; null: all.</summary>
+        public Compatibility? ExactCompatibility { get; set; }
         public int? MinRating { get; set; }
         /// <summary>true: most recently added first; false: alphabetical order.</summary>
         public bool NewestFirst { get; set; }
+        /// <summary>Keeps the games whose name contains this text (case and accents ignored); null: all.</summary>
+        public string? Search { get; set; }
     }
 }

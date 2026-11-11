@@ -13,10 +13,10 @@ namespace Ludopol
     ///   Partial (switch, reflexes)  2 segments, orange
     ///   Partial (gaze, complex)     3 segments, yellow
     ///   Full                        4 segments, green
+    ///   Presumed (not tried yet)    4 segments, blue-grey
     /// </summary>
     public class CompatibilityBar : UniformGrid
     {
-        private static readonly Brush EmptyBrush = Freeze(new SolidColorBrush(Color.FromRgb(0x45, 0x45, 0x4F)));
 
         public static readonly DependencyProperty LevelProperty = DependencyProperty.Register(
             nameof(Level), typeof(Compatibility), typeof(CompatibilityBar),
@@ -48,18 +48,28 @@ namespace Ludopol
                 case Compatibility.PartialWithSwitch: return Freeze(new SolidColorBrush(Color.FromRgb(0xE8, 0x89, 0x2B)));
                 case Compatibility.PartialGaze: return Freeze(new SolidColorBrush(Color.FromRgb(0xD8, 0xC2, 0x3A)));
                 case Compatibility.Full: return Freeze(new SolidColorBrush(Color.FromRgb(0x3D, 0xAF, 0x5A)));
-                default: return EmptyBrush;
+                case Compatibility.Presumed: return Freeze(new SolidColorBrush(Color.FromRgb(0x5B, 0x7D, 0xB1)));
+                default: return Freeze(new SolidColorBrush(Color.FromRgb(0x80, 0x80, 0x8A)));
             }
         }
 
         private void Redraw()
         {
-            // Unknown = 0, None = 1 … Full = 4: the number of coloured segments.
-            int filled = (int)Level;
+            // Unknown = 0, None = 1 … Full = 4: the number of coloured segments. Presumed: all, in blue-grey.
+            int filled = Level == Compatibility.Presumed ? Children.Count : (int)Level;
             Brush brush = BrushOf(Level);
             for (int i = 0; i < Children.Count; i++)
             {
-                ((Border)Children[i]).Background = i < filled ? brush : EmptyBrush;
+                Border segment = (Border)Children[i];
+                if (i < filled)
+                {
+                    segment.Background = brush;
+                }
+                else
+                {
+                    // Follows the theme (light or dark).
+                    segment.SetResourceReference(Border.BackgroundProperty, "GaugeEmptyBrush");
+                }
             }
         }
 

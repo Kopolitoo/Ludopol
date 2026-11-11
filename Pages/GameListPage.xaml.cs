@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
@@ -13,8 +14,12 @@ namespace Ludopol
     /// </summary>
     public partial class GameListPage : UserControl, IPage
     {
-        private static readonly Compatibility?[] CompatibilitySteps =
-            { null, Compatibility.PartialWithSwitch, Compatibility.PartialGaze, Compatibility.Full };
+        /// <summary>The choices of the compatibility menu, best first; null: all.</summary>
+        private static readonly Compatibility?[] CompatibilityChoices =
+        {
+            null, Compatibility.Full, Compatibility.PartialGaze, Compatibility.PartialWithSwitch,
+            Compatibility.Presumed, Compatibility.Unknown, Compatibility.None,
+        };
         private static readonly int?[] RatingSteps = { null, 3, 4, 5 };
         private static readonly bool?[] YesNoSteps = { null, true, false };
 
@@ -22,19 +27,37 @@ namespace Ludopol
         private readonly TileButton _installedFilter = new TileButton();
         private readonly TileButton _ownedFilter = new TileButton();
         private readonly TileButton _triedFilter = new TileButton();
+        private readonly TileButton _categoryFilter = new TileButton();
         private readonly TileButton _compatibilityFilter = new TileButton();
         private readonly TileButton _ratingFilter = new TileButton();
 
         private readonly GameFilter _filter;
         private readonly string _title;
 
-        public GameListPage(GameFilter filter, string title)
+        private readonly bool _searchMode;
+
+        /// <summary>A list of games. searchMode: the search page, with a field for the title above the tiles.</summary>
+        public GameListPage(GameFilter filter, string title, bool searchMode = false)
         {
             InitializeComponent();
             _filter = filter;
             _title = title;
+            _searchMode = searchMode;
+            if (searchMode)
+            {
+                SearchBar.Visibility = Visibility.Visible;
+                SearchBox.Text = filter.Search ?? "";
+            }
 
-            foreach (TileButton button in new[] { _installedFilter, _ownedFilter, _triedFilter, _compatibilityFilter, _ratingFilter })
+            // A list opened from a category keeps it: no category filter there.
+            List<TileButton> buttons = new List<TileButton> { _installedFilter, _ownedFilter, _triedFilter };
+            if (filter.Category == null)
+            {
+                buttons.Add(_categoryFilter);
+            }
+            buttons.Add(_compatibilityFilter);
+            buttons.Add(_ratingFilter);
+            foreach (TileButton button in buttons)
             {
                 button.SetResourceReference(WidthProperty, "SideButtonWidth");
                 button.SetResourceReference(FontSizeProperty, "SmallFontSize");
@@ -43,6 +66,7 @@ namespace Ludopol
             _installedFilter.Click += OnInstalledFilterClick;
             _ownedFilter.Click += OnOwnedFilterClick;
             _triedFilter.Click += OnTriedFilterClick;
+            _categoryFilter.Click += OnCategoryFilterClick;
             _compatibilityFilter.Click += OnCompatibilityFilterClick;
             _ratingFilter.Click += OnRatingFilterClick;
         }
@@ -58,9 +82,33 @@ namespace Ludopol
             List<Game> games = App.Database.GetGames(_filter);
             Games.ItemsSource = games;
             EmptyText.Visibility = games.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            if (_searchMode)
+            {
+                // Ready for Prunel's keyboard or Dragon, without having to aim at the field.
+                Dispatcher.BeginInvoke(new Action(() => System.Windows.Input.Keyboard.Focus(SearchBox)),
+                    System.Windows.Threading.DispatcherPriority.Input);
+            }
         }
 
-        public void OnLeaving() { }
+        private void OnSearchChanged(object sender, TextChangedEventArgs e)
+        {
+            _filter.Search = SearchBox.Text;
+            List<Game> games = App.Database.GetGames(_filter);
+            Games.ItemsSource = games;
+            EmptyText.Visibility = games.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            Scroll.ScrollToTop();
+        }
+
+        private void OnClearSearchClick(object sender, RoutedEventArgs e)
+        {
+            SearchBox.Text = "";
+            System.Windows.Input.Keyboard.Focus(SearchBox);
+        }
+
+        public void OnLeaving()
+        {
+            ChoiceMenu.Hide();
+        }
 
         private void OnGameClick(object sender, RoutedEventArgs e)
         {
@@ -74,7 +122,7 @@ namespace Ludopol
 
         private void OnInstalledFilterClick(object sender, RoutedEventArgs e)
         {
-            _filter.InstalledOnly = !_filter.InstalledOnly;
+            _filter.Installed = Next(YesNoSteps, _filter.Installed);
             ApplyFilter();
         }
 
@@ -92,9 +140,52 @@ namespace Ludopol
 
         private void OnCompatibilityFilterClick(object sender, RoutedEventArgs e)
         {
-            _filter.MinCompatibility = Next(CompatibilitySteps, _filter.MinCompatibility);
-            ApplyFilter();
+            ShowCompatibilityMenu();
         }
+
+        /// <summary>
+        /// The category and compatibility filters have too many values for a loop: each opens
+        /// a menu of big buttons over the list (Ui/ChoiceMenu.cs), the current value in blue.
+        /// </summary>
+        private void ShowCompatibilityMenu()
+        {
+            List<MenuChoice> choices = new List<MenuChoice>();
+            foreach (Compatibility? level in CompatibilityChoices)
+            {
+                object content = Texts.Get("filter.compatibility.all");
+                if (level is Compatibility shown)
+                {
+                    // The name with its gauge under it, as on the tiles.
+                    content = new StackPanel
+                    {
+                        Children =
+                        {
+                            new TextBlock { Text = CompatibilityTexts.Name(shown), TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center },
+                            new CompatibilityBar { Level = shown, Height = 16, Margin = new Thickness(0, 10, 0, 0) },
+                        },
+                    };
+                }
+                choices.Add(new MenuChoice(content, level == _filter.ExactCompatibility, () => _filter.ExactCompatibility = level));
+            }
+            ShowMenu("filter.compatibility.title", choices);
+        }
+
+        private void OnCategoryFilterClick(object sender, RoutedEventArgs e)
+        {
+            List<MenuChoice> choices = new List<MenuChoice>
+            {
+                new MenuChoice(Texts.Get("filter.category.all"), _filter.Category == null, () => _filter.Category = null),
+            };
+            foreach (NamedCount category in App.Database.GetCategories())
+            {
+                string name = category.Name;
+                choices.Add(new MenuChoice(name, name == _filter.Category, () => _filter.Category = name));
+            }
+            ShowMenu("filter.category.title", choices);
+        }
+
+        private void ShowMenu(string titleKey, List<MenuChoice> choices) =>
+            ChoiceMenu.Show(Texts.Get(titleKey), choices, ApplyFilter);
 
         private void OnRatingFilterClick(object sender, RoutedEventArgs e)
         {
@@ -110,8 +201,13 @@ namespace Ludopol
 
         private void UpdateFilterButtons()
         {
-            _installedFilter.Content = Texts.Get(_filter.InstalledOnly ? "filter.installed.only" : "filter.installed.all");
-            _installedFilter.IsSelected = _filter.InstalledOnly;
+            _installedFilter.Content = Texts.Get(_filter.Installed switch
+            {
+                true => "filter.installed.only",
+                false => "filter.installed.no",
+                null => "filter.installed.all",
+            });
+            _installedFilter.IsSelected = _filter.Installed.HasValue;
 
             _ownedFilter.Content = Texts.Get(_filter.OwnedOnSteam switch
             {
@@ -129,10 +225,13 @@ namespace Ludopol
             });
             _triedFilter.IsSelected = _filter.Tried.HasValue;
 
-            _compatibilityFilter.Content = _filter.MinCompatibility is Compatibility minimum
-                ? Texts.Format("filter.compatibility.atLeast", CompatibilityTexts.Name(minimum))
+            _categoryFilter.Content = _filter.Category ?? Texts.Get("filter.category.all");
+            _categoryFilter.IsSelected = _filter.Category != null;
+
+            _compatibilityFilter.Content = _filter.ExactCompatibility is Compatibility level
+                ? Texts.Format("filter.compatibility.is", CompatibilityTexts.Name(level))
                 : Texts.Get("filter.compatibility.all");
-            _compatibilityFilter.IsSelected = _filter.MinCompatibility.HasValue;
+            _compatibilityFilter.IsSelected = _filter.ExactCompatibility.HasValue;
 
             _ratingFilter.Content = _filter.MinRating is int rating
                 ? Texts.Format(rating == 5 ? "filter.rating.five" : "filter.rating.atLeast", rating)
@@ -157,6 +256,7 @@ namespace Ludopol
             Compatibility.PartialWithSwitch => "compatibility.partialSwitch",
             Compatibility.PartialGaze => "compatibility.partialGaze",
             Compatibility.Full => "compatibility.full",
+            Compatibility.Presumed => "compatibility.presumed",
             _ => "compatibility.unknown",
         });
     }
