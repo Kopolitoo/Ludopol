@@ -34,7 +34,7 @@ Dans `%LocalAppData%\Ludopol` :
 
 ## Réglages
 
-Le bouton « Paramètres » (colonne de gauche) règle au regard le survol, son délai, la taille
+Le bouton « Paramètres » (colonne de gauche) règle au regard le plein écran, le survol, son délai, la taille
 du texte, des boutons et des tuiles, et la langue. Tout est enregistré dans `settings.json`,
 qu'on peut aussi modifier à la main, Ludopol fermé :
 
@@ -42,6 +42,7 @@ qu'on peut aussi modifier à la main, Ludopol fermé :
 | Réglage | Par défaut | Rôle |
 | --- | --- | --- |
 | `Language` | `fr` | Langue de l'interface (`fr` ou `en`). |
+| `FullScreen` | `true` | Plein écran ; `false` : fenêtre ordinaire, déplaçable et redimensionnable. |
 | `TileWidth`, `TileHeight` | 320, 300 | Taille des tuiles de jeux. |
 | `ButtonMinSize` | 150 | Taille minimale de tout bouton. |
 | `Spacing` | 24 | Écart entre deux boutons. |

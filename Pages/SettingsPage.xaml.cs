@@ -43,6 +43,14 @@ namespace Ludopol
             AppSettings settings = AppSettings.Current;
             Info.Children.Clear();
 
+            AddTitle("settings.fullScreen");
+            AddChoices(new[] { true, false }, v => Texts.Get(v ? "common.yes" : "common.no"),
+                settings.FullScreen, v =>
+                {
+                    settings.FullScreen = v;
+                    MainWindow.Current.ApplyWindowMode();
+                });
+
             AddTitle("settings.hoverActivation");
             AddChoices(new[] { true, false }, v => Texts.Get(v ? "common.yes" : "common.no"),
                 settings.HoverActivation, v => settings.HoverActivation = v);

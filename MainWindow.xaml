@@ -3,15 +3,14 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Ludopol"
         Title="Ludopol"
-        WindowStyle="None"
-        WindowState="Maximized"
-        ResizeMode="NoResize"
+        Width="1600" Height="1000"
+        WindowStartupLocation="CenterScreen"
         Background="{StaticResource BackgroundBrush}"
         Foreground="{StaticResource TextBrush}"
         FontFamily="Segoe UI"
         FontSize="{DynamicResource BaseFontSize}">
     <!--
-      The only window, full screen, laid out in columns so that the content gets the whole
+      The only window, full screen or not (setting FullScreen, see ApplyWindowMode), laid out in columns so that the content gets the whole
       height of the screen:
         - left: navigation, one button under the other ("Back", "Home"… "Settings" and
           "Quit" at the bottom);

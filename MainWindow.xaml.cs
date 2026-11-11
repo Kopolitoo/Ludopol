@@ -40,7 +40,30 @@ namespace Ludopol
         {
             InitializeComponent();
             Current = this;
+            ApplyWindowMode();
             ShowPage(new HomePage());
+        }
+
+        /// <summary>
+        /// Full screen (no frame, over the taskbar) or an ordinary window, according to the
+        /// FullScreen setting. Called at startup and when the setting changes.
+        /// </summary>
+        public void ApplyWindowMode()
+        {
+            // The frame must be changed while the window is not maximised, otherwise Windows
+            // keeps the taskbar visible in full screen.
+            WindowState = WindowState.Normal;
+            if (AppSettings.Current.FullScreen)
+            {
+                WindowStyle = WindowStyle.None;
+                ResizeMode = ResizeMode.NoResize;
+                WindowState = WindowState.Maximized;
+            }
+            else
+            {
+                WindowStyle = WindowStyle.SingleBorderWindow;
+                ResizeMode = ResizeMode.CanResize;
+            }
         }
 
         /// <summary>Opens a new page; "Back" will come back to the current one.</summary>
@@ -107,10 +130,16 @@ namespace Ludopol
 
         private void OnQuitCancelClick(object sender, RoutedEventArgs e) => QuitPanel.Visibility = Visibility.Collapsed;
 
-        private void OnQuitConfirmClick(object sender, RoutedEventArgs e)
+        private void OnQuitConfirmClick(object sender, RoutedEventArgs e) => Close();
+
+        /// <summary>
+        /// Before closing ("Quit", or the window's cross in windowed mode): the current page
+        /// saves what it must (the notes of a game's page).
+        /// </summary>
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
             (_current as IPage)?.OnLeaving();
-            Close();
+            base.OnClosing(e);
         }
     }
 }

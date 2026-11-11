@@ -61,5 +61,6 @@
   "settings.size.large": "Large",
   "settings.size.veryLarge": "Very large",
   "settings.language": "Language",
-  "settings.languageNote": "The new language applies at the next start of Ludopol."
+  "settings.languageNote": "The new language applies at the next start of Ludopol.",
+  "settings.fullScreen": "Full screen"
 }

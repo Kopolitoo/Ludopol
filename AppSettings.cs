@@ -26,6 +26,9 @@ namespace Ludopol
         /// <summary>Interface language: the name of a file of the Languages folder ("fr", "en").</summary>
         public string Language { get; set; } = "fr";
 
+        /// <summary>true: full screen, without frame; false: an ordinary window, which can be moved and resized.</summary>
+        public bool FullScreen { get; set; } = true;
+
         /// <summary>Width and height of a game tile in the lists.</summary>
         public double TileWidth { get; set; } = 320;
         public double TileHeight { get; set; } = 300;
