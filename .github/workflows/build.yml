@@ -1,0 +1,50 @@
+# Automatic build (continuous integration, "CI").
+#
+# On every pull request and every push to main, GitHub starts a Windows machine,
+# checks the language files and compiles Ludopol. The result (green tick or red cross)
+# shows on the pull request. The compiled program is kept for 14 days ("Ludopol" artifact
+# of the run), to try a pull request without compiling it: it needs the .NET 8 Desktop Runtime.
+
+name: Build
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Install .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Check the language files
+        shell: pwsh
+        run: ./.github/scripts/check-data-files.ps1
+
+      - name: Compile Ludopol
+        run: dotnet publish Ludopol.csproj --configuration Release --runtime win-x64 --self-contained false --output publish
+
+      - name: Keep the compiled program
+        if: github.event_name != 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ludopol
+          path: publish
+          retention-days: 14

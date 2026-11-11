@@ -1,0 +1,15 @@
+# Build output
+bin/
+obj/
+*.nupkg
+
+# Visual Studio and editor files
+.vs/
+*.user
+*.suo
+.vscode/*
+!.vscode/settings.json
+
+# Logs and local databases
+*.log
+*.db

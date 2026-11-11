@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Ludopol: a gaze-friendly catalogue of games (WPF, .NET 8).
+    Open this file (or Ludopol.slnx) in Visual Studio 2022 to compile and run it.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>Ludopol</RootNamespace>
+    <AssemblyName>Ludopol</AssemblyName>
+    <Version>0.1.0</Version>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Lets the project be compiled on a non-Windows machine too (cloud check only). -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The only external dependency: reads and writes the local SQLite database. -->
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The interface language files (Languages/fr.json…), read by Ui/Texts.cs,
+         are copied next to Ludopol.exe. -->
+    <None Update="Languages\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>
