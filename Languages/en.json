@@ -128,7 +128,7 @@
   "settings.theme.dark": "Dark",
   "settings.theme.light": "Light",
   "settings.theme.system": "As Windows",
-  "details.steamStore": "See in the Steam store (buy)",
+  "details.steamStore": "See the game in the Steam store",
   "home.search": "Search for a game",
   "search.clear": "Clear"
 }

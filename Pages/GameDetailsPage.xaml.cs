@@ -10,8 +10,9 @@ namespace Ludopol
     /// VIEW: the page of one game.
     ///
     /// Under the image (BuildActions): "Play" when the game is installed (with a confirmation,
-    /// see PlayPanel), otherwise "Install with Steam" for a Steam game; and "Choose the
-    /// program" for a game outside Steam, or to start a Steam game another way. Whether the
+    /// see PlayPanel), otherwise "Install with Steam" for a game bought on Steam; "See the
+    /// game in the Steam store" for every game on Steam; and "Choose the program" for a game
+    /// not bought on Steam. Whether the
     /// game is installed is checked again each time the page is shown and each time Ludopol
     /// comes back to the front (after an installation in Steam, for example).
     ///
@@ -140,17 +141,24 @@ namespace Ludopol
                         _actionMessage = Texts.Get("details.installStarted");
                     });
                 }
-                else if (game.SteamAppId.HasValue)
-                {
-                    // Not bought yet: its page in the Steam store, to buy it.
-                    TileButton store = AddAction("details.steamStore");
-                    store.Click += (s, e) => RunAction(() => GameLauncher.OpenSteamStore(game));
-                }
             }
 
-            TileButton choose = AddAction("details.chooseProgram");
-            choose.SetResourceReference(FontSizeProperty, "SmallFontSize");
-            choose.Click += (s, e) => ChooseProgram(game);
+            // A game on Steam: its store page (to buy it, or to read about it).
+            if (game.SteamAppId.HasValue)
+            {
+                TileButton store = AddAction("details.steamStore");
+                store.SetResourceReference(FontSizeProperty, "SmallFontSize");
+                store.Click += (s, e) => RunAction(() => GameLauncher.OpenSteamStore(game));
+            }
+
+            // Choosing a program is for games outside Steam: not offered for a game bought on
+            // Steam (a program already chosen can still be removed).
+            if (!game.OwnedOnSteam)
+            {
+                TileButton choose = AddAction("details.chooseProgram");
+                choose.SetResourceReference(FontSizeProperty, "SmallFontSize");
+                choose.Click += (s, e) => ChooseProgram(game);
+            }
             if (!string.IsNullOrEmpty(game.LaunchTarget))
             {
                 AddActionText(Texts.Format("details.program", game.LaunchTarget), muted: true);

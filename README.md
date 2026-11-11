@@ -80,8 +80,9 @@ réduit à chaque lettre, sans tenir compte des majuscules ni des accents.
 Les catégories, les tags Steam et le développeur sont des boutons : chacun ouvre la liste des
 jeux qui l'ont (« Retour » ramène à la fiche).
 
-Un jeu Steam pas installé propose « Installer avec Steam » s'il est possédé, sinon « Voir sur
-le magasin Steam (acheter) », qui ouvre sa page dans Steam (ou dans le navigateur sans Steam).
+Un jeu Steam pas installé propose « Installer avec Steam » s'il est possédé. Tout jeu présent
+sur Steam a « Voir le jeu sur le magasin Steam » (page dans Steam, ou dans le navigateur sans
+Steam). « Choisir le programme du jeu… » n'est proposé que pour un jeu non possédé sur Steam.
 
 ## Compiler et lancer
 
