@@ -119,5 +119,7 @@
   "compatibility.presumed": "Presumed (not tried yet)",
   "filter.compatibility.is": "Compatibility: {0}",
   "filter.compatibility.title": "Which compatibility to show?",
-  "filter.compatibility.cancel": "Cancel"
+  "filter.category.all": "Every category",
+  "filter.category.title": "Which category to show?",
+  "filter.menu.cancel": "Cancel"
 }

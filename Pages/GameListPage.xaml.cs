@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
@@ -26,6 +27,7 @@ namespace Ludopol
         private readonly TileButton _installedFilter = new TileButton();
         private readonly TileButton _ownedFilter = new TileButton();
         private readonly TileButton _triedFilter = new TileButton();
+        private readonly TileButton _categoryFilter = new TileButton();
         private readonly TileButton _compatibilityFilter = new TileButton();
         private readonly TileButton _ratingFilter = new TileButton();
 
@@ -38,7 +40,15 @@ namespace Ludopol
             _filter = filter;
             _title = title;
 
-            foreach (TileButton button in new[] { _installedFilter, _ownedFilter, _triedFilter, _compatibilityFilter, _ratingFilter })
+            // A list opened from a category keeps it: no category filter there.
+            List<TileButton> buttons = new List<TileButton> { _installedFilter, _ownedFilter, _triedFilter };
+            if (filter.Category == null)
+            {
+                buttons.Add(_categoryFilter);
+            }
+            buttons.Add(_compatibilityFilter);
+            buttons.Add(_ratingFilter);
+            foreach (TileButton button in buttons)
             {
                 button.SetResourceReference(WidthProperty, "SideButtonWidth");
                 button.SetResourceReference(FontSizeProperty, "SmallFontSize");
@@ -47,6 +57,7 @@ namespace Ludopol
             _installedFilter.Click += OnInstalledFilterClick;
             _ownedFilter.Click += OnOwnedFilterClick;
             _triedFilter.Click += OnTriedFilterClick;
+            _categoryFilter.Click += OnCategoryFilterClick;
             _compatibilityFilter.Click += OnCompatibilityFilterClick;
             _ratingFilter.Click += OnRatingFilterClick;
         }
@@ -66,7 +77,7 @@ namespace Ludopol
 
         public void OnLeaving()
         {
-            CompatibilityMenu.Visibility = Visibility.Collapsed;
+            ChoiceMenu.Visibility = Visibility.Collapsed;
         }
 
         private void OnGameClick(object sender, RoutedEventArgs e)
@@ -103,24 +114,19 @@ namespace Ludopol
         }
 
         /// <summary>
-        /// The compatibility filter has too many values for a loop: it opens a menu of big
-        /// buttons over the list (CompatibilityMenu), one per level, the current one in blue.
+        /// The category and compatibility filters have too many values for a loop: each opens
+        /// a menu of big buttons over the list (ChoiceMenu), the current value in blue.
         /// </summary>
         private void ShowCompatibilityMenu()
         {
-            CompatibilityChoicesPanel.Children.Clear();
+            List<MenuChoice> choices = new List<MenuChoice>();
             foreach (Compatibility? level in CompatibilityChoices)
             {
-                TileButton button = new TileButton
-                {
-                    Content = Texts.Get("filter.compatibility.all"),
-                    IsSelected = level == _filter.ExactCompatibility,
-                };
-                button.SetResourceReference(WidthProperty, "WideButtonWidth");
+                object content = Texts.Get("filter.compatibility.all");
                 if (level is Compatibility shown)
                 {
                     // The name with its gauge under it, as on the tiles.
-                    button.Content = new StackPanel
+                    content = new StackPanel
                     {
                         Children =
                         {
@@ -129,20 +135,62 @@ namespace Ludopol
                         },
                     };
                 }
-                button.Click += (s, e) =>
-                {
-                    CompatibilityMenu.Visibility = Visibility.Collapsed;
-                    _filter.ExactCompatibility = level;
-                    ApplyFilter();
-                };
-                CompatibilityChoicesPanel.Children.Add(button);
+                choices.Add(new MenuChoice(content, level == _filter.ExactCompatibility, () => _filter.ExactCompatibility = level));
             }
-            CompatibilityMenu.Visibility = Visibility.Visible;
+            ShowMenu("filter.compatibility.title", choices);
         }
 
-        private void OnCompatibilityMenuCancel(object sender, RoutedEventArgs e)
+        private void OnCategoryFilterClick(object sender, RoutedEventArgs e)
         {
-            CompatibilityMenu.Visibility = Visibility.Collapsed;
+            List<MenuChoice> choices = new List<MenuChoice>
+            {
+                new MenuChoice(Texts.Get("filter.category.all"), _filter.Category == null, () => _filter.Category = null),
+            };
+            foreach (NamedCount category in App.Database.GetCategories())
+            {
+                string name = category.Name;
+                choices.Add(new MenuChoice(name, name == _filter.Category, () => _filter.Category = name));
+            }
+            ShowMenu("filter.category.title", choices);
+        }
+
+        private void ShowMenu(string titleKey, List<MenuChoice> choices)
+        {
+            ChoiceMenuTitle.Text = Texts.Get(titleKey);
+            ChoicePanel.Children.Clear();
+            foreach (MenuChoice choice in choices)
+            {
+                TileButton button = new TileButton { Content = choice.Content, IsSelected = choice.Selected };
+                button.SetResourceReference(WidthProperty, "WideButtonWidth");
+                button.Click += (s, e) =>
+                {
+                    ChoiceMenu.Visibility = Visibility.Collapsed;
+                    choice.Apply();
+                    ApplyFilter();
+                };
+                ChoicePanel.Children.Add(button);
+            }
+            ChoiceMenu.Visibility = Visibility.Visible;
+        }
+
+        private void OnChoiceMenuCancel(object sender, RoutedEventArgs e)
+        {
+            ChoiceMenu.Visibility = Visibility.Collapsed;
+        }
+
+        /// <summary>One button of a filter's menu: what it shows, whether it is the current value, what it sets.</summary>
+        private sealed class MenuChoice
+        {
+            public MenuChoice(object content, bool selected, Action apply)
+            {
+                Content = content;
+                Selected = selected;
+                Apply = apply;
+            }
+
+            public object Content { get; }
+            public bool Selected { get; }
+            public Action Apply { get; }
         }
 
         private void OnRatingFilterClick(object sender, RoutedEventArgs e)
@@ -182,6 +230,9 @@ namespace Ludopol
                 null => "filter.tried.all",
             });
             _triedFilter.IsSelected = _filter.Tried.HasValue;
+
+            _categoryFilter.Content = _filter.Category ?? Texts.Get("filter.category.all");
+            _categoryFilter.IsSelected = _filter.Category != null;
 
             _compatibilityFilter.Content = _filter.ExactCompatibility is Compatibility level
                 ? Texts.Format("filter.compatibility.is", CompatibilityTexts.Name(level))
