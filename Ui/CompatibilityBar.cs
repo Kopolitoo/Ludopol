@@ -17,7 +17,6 @@ namespace Ludopol
     /// </summary>
     public class CompatibilityBar : UniformGrid
     {
-        private static readonly Brush EmptyBrush = Freeze(new SolidColorBrush(Color.FromRgb(0x45, 0x45, 0x4F)));
 
         public static readonly DependencyProperty LevelProperty = DependencyProperty.Register(
             nameof(Level), typeof(Compatibility), typeof(CompatibilityBar),
@@ -50,7 +49,7 @@ namespace Ludopol
                 case Compatibility.PartialGaze: return Freeze(new SolidColorBrush(Color.FromRgb(0xD8, 0xC2, 0x3A)));
                 case Compatibility.Full: return Freeze(new SolidColorBrush(Color.FromRgb(0x3D, 0xAF, 0x5A)));
                 case Compatibility.Presumed: return Freeze(new SolidColorBrush(Color.FromRgb(0x5B, 0x7D, 0xB1)));
-                default: return EmptyBrush;
+                default: return Freeze(new SolidColorBrush(Color.FromRgb(0x80, 0x80, 0x8A)));
             }
         }
 
@@ -61,7 +60,16 @@ namespace Ludopol
             Brush brush = BrushOf(Level);
             for (int i = 0; i < Children.Count; i++)
             {
-                ((Border)Children[i]).Background = i < filled ? brush : EmptyBrush;
+                Border segment = (Border)Children[i];
+                if (i < filled)
+                {
+                    segment.Background = brush;
+                }
+                else
+                {
+                    // Follows the theme (light or dark).
+                    segment.SetResourceReference(Border.BackgroundProperty, "GaugeEmptyBrush");
+                }
             }
         }
 

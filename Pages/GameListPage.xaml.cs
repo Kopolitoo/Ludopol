@@ -34,11 +34,20 @@ namespace Ludopol
         private readonly GameFilter _filter;
         private readonly string _title;
 
-        public GameListPage(GameFilter filter, string title)
+        private readonly bool _searchMode;
+
+        /// <summary>A list of games. searchMode: the search page, with a field for the title above the tiles.</summary>
+        public GameListPage(GameFilter filter, string title, bool searchMode = false)
         {
             InitializeComponent();
             _filter = filter;
             _title = title;
+            _searchMode = searchMode;
+            if (searchMode)
+            {
+                SearchBar.Visibility = Visibility.Visible;
+                SearchBox.Text = filter.Search ?? "";
+            }
 
             // A list opened from a category keeps it: no category filter there.
             List<TileButton> buttons = new List<TileButton> { _installedFilter, _ownedFilter, _triedFilter };
@@ -73,6 +82,27 @@ namespace Ludopol
             List<Game> games = App.Database.GetGames(_filter);
             Games.ItemsSource = games;
             EmptyText.Visibility = games.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            if (_searchMode)
+            {
+                // Ready for Prunel's keyboard or Dragon, without having to aim at the field.
+                Dispatcher.BeginInvoke(new Action(() => System.Windows.Input.Keyboard.Focus(SearchBox)),
+                    System.Windows.Threading.DispatcherPriority.Input);
+            }
+        }
+
+        private void OnSearchChanged(object sender, TextChangedEventArgs e)
+        {
+            _filter.Search = SearchBox.Text;
+            List<Game> games = App.Database.GetGames(_filter);
+            Games.ItemsSource = games;
+            EmptyText.Visibility = games.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            Scroll.ScrollToTop();
+        }
+
+        private void OnClearSearchClick(object sender, RoutedEventArgs e)
+        {
+            SearchBox.Text = "";
+            System.Windows.Input.Keyboard.Focus(SearchBox);
         }
 
         public void OnLeaving()

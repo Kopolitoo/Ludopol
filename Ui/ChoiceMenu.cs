@@ -29,7 +29,7 @@ namespace Ludopol
         public ChoiceMenu()
         {
             Visibility = Visibility.Collapsed;
-            Background = new SolidColorBrush(Color.FromArgb(0xF2, 0x1E, 0x1E, 0x24));
+            SetResourceReference(BackgroundProperty, "OverlayBrush");
             _title.SetResourceReference(TextBlock.FontSizeProperty, "TitleFontSize");
 
             TileButton cancel = new TileButton

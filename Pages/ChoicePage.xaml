@@ -21,7 +21,7 @@
                         <Image Source="{Binding ImageSource, TargetNullValue={x:Null}}" Stretch="UniformToFill" />
                     </Grid>
                     <TextBlock Text="{Binding Name}" TextWrapping="Wrap" TextAlignment="Center" FontWeight="SemiBold" Margin="0,10,0,0" />
-                    <TextBlock Text="{Binding CountText}" TextWrapping="Wrap" TextAlignment="Center" Foreground="{StaticResource MutedTextBrush}"
+                    <TextBlock Text="{Binding CountText}" TextWrapping="Wrap" TextAlignment="Center" Foreground="{DynamicResource MutedTextBrush}"
                                FontSize="{DynamicResource SmallFontSize}" Margin="0,4,0,0" />
                 </StackPanel>
             </local:TileButton>
@@ -32,7 +32,7 @@
             <local:TileButton Click="OnItemClick">
                 <StackPanel>
                     <TextBlock Text="{Binding Name}" TextWrapping="Wrap" TextAlignment="Center" FontWeight="SemiBold" />
-                    <TextBlock Text="{Binding CountText}" TextWrapping="Wrap" TextAlignment="Center" Foreground="{StaticResource MutedTextBrush}"
+                    <TextBlock Text="{Binding CountText}" TextWrapping="Wrap" TextAlignment="Center" Foreground="{DynamicResource MutedTextBrush}"
                                FontSize="{DynamicResource SmallFontSize}" Margin="0,6,0,0" />
                 </StackPanel>
             </local:TileButton>

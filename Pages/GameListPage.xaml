@@ -5,44 +5,59 @@
     <!--
       A list of games: the game tiles (image, name, compatibility gauge), which scroll.
       The filter buttons are in a column on the left, made in code (SideContent).
+      On the search page (Home → Search), SearchBar is shown above the tiles.
       ChoiceMenu covers the list while the choices of the category or compatibility filter are shown.
     -->
     <Grid>
-        <TextBlock x:Name="EmptyText" Text="{local:Tr list.empty}" Visibility="Collapsed"
-                   HorizontalAlignment="Center" VerticalAlignment="Center"
-                   Foreground="{StaticResource MutedTextBrush}" />
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-        <local:ScrollPanel x:Name="Scroll">
-            <ItemsControl x:Name="Games">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <local:TileGrid ItemMinWidth="{DynamicResource TileSlotWidth}" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <local:TileButton Padding="10" Click="OnGameClick"
-                                          HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top">
-                            <StackPanel>
-                                <Grid Height="{DynamicResource TileImageHeight}" ClipToBounds="True">
-                                    <!-- Letters on a plain background, hidden by the image when there is one. -->
-                                    <Border Background="{StaticResource PlaceholderBrush}" CornerRadius="8">
-                                        <TextBlock Text="{Binding Initials}" FontSize="{DynamicResource TitleFontSize}"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                    <Image Source="{Binding ImageUrl, TargetNullValue={x:Null}}" Stretch="UniformToFill" />
-                                </Grid>
-                                <!-- The name wraps on several lines: never cut. -->
-                                <TextBlock Text="{Binding Name}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,8,0,6" FontSize="{DynamicResource SmallFontSize}" />
-                                <local:CompatibilityBar Level="{Binding Compatibility}" Height="16" />
-                            </StackPanel>
-                        </local:TileButton>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </local:ScrollPanel>
+        <!-- Search by title (only on the search page): an ordinary field, for Prunel's keyboard or Dragon. -->
+        <DockPanel x:Name="SearchBar" Visibility="Collapsed">
+            <local:TileButton DockPanel.Dock="Right" Content="{local:Tr search.clear}" Width="{DynamicResource WideButtonWidth}"
+                              Click="OnClearSearchClick" />
+            <TextBox x:Name="SearchBox" VerticalContentAlignment="Center" TextChanged="OnSearchChanged" />
+        </DockPanel>
+
+        <Grid Grid.Row="1">
+            <TextBlock x:Name="EmptyText" Text="{local:Tr list.empty}" Visibility="Collapsed"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                       Foreground="{DynamicResource MutedTextBrush}" />
+
+            <local:ScrollPanel x:Name="Scroll">
+                <ItemsControl x:Name="Games">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <local:TileGrid ItemMinWidth="{DynamicResource TileSlotWidth}" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <local:TileButton Padding="10" Click="OnGameClick"
+                                              HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top">
+                                <StackPanel>
+                                    <Grid Height="{DynamicResource TileImageHeight}" ClipToBounds="True">
+                                        <!-- Letters on a plain background, hidden by the image when there is one. -->
+                                        <Border Background="{DynamicResource PlaceholderBrush}" CornerRadius="8">
+                                            <TextBlock Text="{Binding Initials}" FontSize="{DynamicResource TitleFontSize}"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <Image Source="{Binding ImageUrl, TargetNullValue={x:Null}}" Stretch="UniformToFill" />
+                                    </Grid>
+                                    <!-- The name wraps on several lines: never cut. -->
+                                    <TextBlock Text="{Binding Name}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,8,0,6" FontSize="{DynamicResource SmallFontSize}" />
+                                    <local:CompatibilityBar Level="{Binding Compatibility}" Height="16" />
+                                </StackPanel>
+                            </local:TileButton>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </local:ScrollPanel>
+        </Grid>
 
         <!-- The menu of a filter with many values (category, compatibility), over the list. -->
-        <local:ChoiceMenu x:Name="ChoiceMenu" />
+        <local:ChoiceMenu x:Name="ChoiceMenu" Grid.RowSpan="2" />
     </Grid>
 </UserControl>

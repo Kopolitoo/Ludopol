@@ -120,5 +120,7 @@ namespace Ludopol
         public int? MinRating { get; set; }
         /// <summary>true: most recently added first; false: alphabetical order.</summary>
         public bool NewestFirst { get; set; }
+        /// <summary>Keeps the games whose name contains this text (case and accents ignored); null: all.</summary>
+        public string? Search { get; set; }
     }
 }

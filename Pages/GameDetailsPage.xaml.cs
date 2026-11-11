@@ -131,7 +131,7 @@ namespace Ludopol
             else
             {
                 AddActionText(Texts.Get("details.notInstalled"), muted: true);
-                if (game.SteamAppId.HasValue)
+                if (game.SteamAppId.HasValue && game.OwnedOnSteam)
                 {
                     TileButton install = AddAction("details.installWithSteam");
                     install.Click += (s, e) => RunAction(() =>
@@ -139,6 +139,12 @@ namespace Ludopol
                         GameLauncher.InstallWithSteam(game);
                         _actionMessage = Texts.Get("details.installStarted");
                     });
+                }
+                else if (game.SteamAppId.HasValue)
+                {
+                    // Not bought yet: its page in the Steam store, to buy it.
+                    TileButton store = AddAction("details.steamStore");
+                    store.Click += (s, e) => RunAction(() => GameLauncher.OpenSteamStore(game));
                 }
             }
 
@@ -238,7 +244,7 @@ namespace Ludopol
             TextBlock block = new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(12, 12, 12, 0) };
             if (muted)
             {
-                block.Foreground = (System.Windows.Media.Brush)FindResource("MutedTextBrush");
+                block.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
             }
             Actions.Children.Add(block);
         }
@@ -431,7 +437,7 @@ namespace Ludopol
             TextBlock block = new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(12, 12, 12, 0) };
             if (muted)
             {
-                block.Foreground = (System.Windows.Media.Brush)FindResource("MutedTextBrush");
+                block.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
             }
             Info.Children.Add(block);
         }

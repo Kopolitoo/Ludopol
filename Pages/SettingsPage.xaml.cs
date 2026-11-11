@@ -117,6 +117,10 @@ namespace Ludopol
                             MainWindow.Current.ApplyWindowMode();
                         });
 
+                    AddTitle("settings.theme");
+                    AddChoices(new[] { "dark", "light", "system" }, theme => Texts.Get("settings.theme." + theme),
+                        settings.Theme, theme => settings.Theme = theme);
+
                     AddTitle("settings.language");
                     AddChoices(new[] { "fr", "en" }, code => code == "fr" ? "Français" : "English",
                         settings.Language, code => settings.Language = code);
@@ -444,7 +448,7 @@ namespace Ludopol
             TextBlock block = new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(12, 0, 12, 12) };
             if (muted)
             {
-                block.Foreground = (System.Windows.Media.Brush)FindResource("MutedTextBrush");
+                block.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
             }
             Info.Children.Add(block);
         }

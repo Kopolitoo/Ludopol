@@ -10,7 +10,11 @@
                     xmlns:local="clr-namespace:Ludopol"
                     xmlns:system="clr-namespace:System;assembly=System.Runtime">
 
-    <!-- Colours: dark background, strong contrast. -->
+    <!--
+      Colours: dark theme by default, strong contrast. The theme chosen in the settings
+      (dark, light or as Windows) replaces them at startup and when it changes
+      (Ui/ThemeColors.cs), hence {DynamicResource …} for every brush.
+    -->
     <SolidColorBrush x:Key="BackgroundBrush" Color="#1E1E24" />
     <SolidColorBrush x:Key="SurfaceBrush" Color="#2E2E38" />
     <SolidColorBrush x:Key="PressedBrush" Color="#45455A" />
@@ -20,6 +24,10 @@
     <SolidColorBrush x:Key="AccentBrush" Color="#2F6FD0" />
     <!-- Frame of the button under the cursor: where the gaze is. -->
     <SolidColorBrush x:Key="HoverBrush" Color="#FFD54A" />
+    <!-- Behind a menu or a question that covers the page. -->
+    <SolidColorBrush x:Key="OverlayBrush" Color="#F21E1E24" />
+    <!-- Empty segments of the compatibility gauge. -->
+    <SolidColorBrush x:Key="GaugeEmptyBrush" Color="#45454F" />
 
     <!-- Default values, replaced at startup by those of settings.json. -->
     <system:Double x:Key="TileWidth">320</system:Double>
@@ -40,8 +48,8 @@
       With hover activation: a yellow gauge fills at the bottom while the cursor stays on it.
     -->
     <Style TargetType="{x:Type local:TileButton}">
-        <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="FontSize" Value="{DynamicResource BaseFontSize}" />
         <Setter Property="MinWidth" Value="{DynamicResource ButtonMinSize}" />
@@ -75,7 +83,7 @@
                                 </ContentPresenter.Resources>
                             </ContentPresenter>
                             <!-- Hover activation gauge: fills from left to right during the delay. -->
-                            <Rectangle Height="10" VerticalAlignment="Bottom" Fill="{StaticResource HoverBrush}"
+                            <Rectangle Height="10" VerticalAlignment="Bottom" Fill="{DynamicResource HoverBrush}"
                                        RenderTransformOrigin="0,0.5">
                                 <Rectangle.RenderTransform>
                                     <ScaleTransform ScaleX="{Binding HoverProgress, RelativeSource={RelativeSource TemplatedParent}}" />
@@ -85,13 +93,14 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="Tag" Value="selected">
-                            <Setter TargetName="Frame" Property="Background" Value="{StaticResource AccentBrush}" />
+                            <Setter TargetName="Frame" Property="Background" Value="{DynamicResource AccentBrush}" />
+                            <Setter Property="Foreground" Value="White" />
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Frame" Property="BorderBrush" Value="{StaticResource HoverBrush}" />
+                            <Setter TargetName="Frame" Property="BorderBrush" Value="{DynamicResource HoverBrush}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Frame" Property="Background" Value="{StaticResource PressedBrush}" />
+                            <Setter TargetName="Frame" Property="Background" Value="{DynamicResource PressedBrush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.35" />
@@ -104,10 +113,10 @@
 
     <!-- Text fields (my notes): ordinary Windows fields, usable with Prunel's keyboard and Dragon. -->
     <Style TargetType="TextBox">
-        <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
-        <Setter Property="CaretBrush" Value="{StaticResource TextBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource MutedTextBrush}" />
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource TextBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource MutedTextBrush}" />
         <Setter Property="BorderThickness" Value="2" />
         <Setter Property="Padding" Value="12" />
         <Setter Property="FontSize" Value="{DynamicResource BaseFontSize}" />
@@ -116,7 +125,7 @@
 
     <!-- Section titles inside a page. -->
     <Style x:Key="SectionTitle" TargetType="TextBlock">
-        <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
         <Setter Property="FontSize" Value="{DynamicResource BaseFontSize}" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Margin" Value="12,24,12,0" />

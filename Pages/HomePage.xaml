@@ -16,5 +16,6 @@
         <local:TileButton Content="{local:Tr home.developers}" Click="OnDevelopersClick" />
         <local:TileButton Content="{local:Tr home.recent}" Click="OnRecentClick" />
         <local:TileButton Content="{local:Tr home.all}" Click="OnAllClick" />
+        <local:TileButton Content="{local:Tr home.search}" Click="OnSearchClick" />
     </WrapPanel>
 </UserControl>

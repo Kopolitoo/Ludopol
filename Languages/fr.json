@@ -109,7 +109,7 @@
   "steamSync.added": "{0} jeux ajoutés dans la catégorie « {1} ».",
   "steamSync.addedOne": "« {0} » ajouté dans la catégorie « {1} ».",
   "steamSync.error": "La synchronisation a échoué : {0}",
-  "settings.section.screen": "Écran et langue",
+  "settings.section.screen": "Écran, thème et langue",
   "settings.section.sizes": "Tailles",
   "settings.section.hover": "Survol",
   "settings.section.catalogue": "Catalogue : import et jeux installés",
@@ -123,5 +123,12 @@
   "filter.category.title": "Quelle catégorie afficher ?",
   "filter.menu.cancel": "Annuler",
   "details.mine": "Mes notes",
-  "details.field": "{0} : {1}"
+  "details.field": "{0} : {1}",
+  "settings.theme": "Thème",
+  "settings.theme.dark": "Sombre",
+  "settings.theme.light": "Clair",
+  "settings.theme.system": "Comme Windows",
+  "details.steamStore": "Voir sur le magasin Steam (acheter)",
+  "home.search": "Rechercher un jeu",
+  "search.clear": "Effacer"
 }

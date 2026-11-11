@@ -424,6 +424,12 @@ namespace Ludopol
                 }
             }
 
+            if (!string.IsNullOrWhiteSpace(filter.Search))
+            {
+                string wanted = Simplify(filter.Search);
+                games = games.Where(g => Simplify(g.Name).Contains(wanted)).ToList();
+            }
+
             return filter.NewestFirst
                 ? games.OrderByDescending(g => g.AddedAt).ThenBy(g => g.Name, NameOrder).ToList()
                 : games.OrderBy(g => g.Name, NameOrder).ToList();
@@ -482,6 +488,21 @@ namespace Ludopol
                 .OrderBy(c => c.Name, NameOrder).ToList();
 
         // ----- Helpers -----
+
+        /// <summary>A text without case, accents or extra spaces, to compare names: "Échecs " → "echecs".</summary>
+        public static string Simplify(string text)
+        {
+            string decomposed = text.Trim().ToLowerInvariant().Normalize(NormalizationForm.FormD);
+            StringBuilder simple = new StringBuilder(decomposed.Length);
+            foreach (char c in decomposed)
+            {
+                if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                {
+                    simple.Append(c);
+                }
+            }
+            return simple.ToString().Normalize(NormalizationForm.FormC);
+        }
 
         /// <summary>Writes a game's categories and tags (tags in Steam's order).</summary>
         private static void InsertNames(SqliteConnection connection, SqliteTransaction transaction, Game game)

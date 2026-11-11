@@ -70,10 +70,18 @@ mettre « Détails des jeux » sur Public.
 Dans les listes, le filtre « Installés » passe par « Installés seulement » et « Pas installés » ;
 avec « Possédés sur Steam », on voit les jeux achetés mais pas installés.
 
+## Rechercher
+
+Accueil → « Rechercher un jeu » : un champ en haut (clavier de Prunel ou Dragon) ; la liste se
+réduit à chaque lettre, sans tenir compte des majuscules ni des accents.
+
 ## Fiche d'un jeu
 
 Les catégories, les tags Steam et le développeur sont des boutons : chacun ouvre la liste des
 jeux qui l'ont (« Retour » ramène à la fiche).
+
+Un jeu Steam pas installé propose « Installer avec Steam » s'il est possédé, sinon « Voir sur
+le magasin Steam (acheter) », qui ouvre sa page dans Steam (ou dans le navigateur sans Steam).
 
 ## Compiler et lancer
 
@@ -105,6 +113,7 @@ qu'on peut aussi modifier à la main, Ludopol fermé :
 | Réglage | Par défaut | Rôle |
 | --- | --- | --- |
 | `Language` | `fr` | Langue de l'interface (`fr` ou `en`). |
+| `Theme` | `dark` | Couleurs : `dark` (sombre), `light` (clair) ou `system` (comme Windows). |
 | `FullScreen` | `true` | Plein écran ; `false` : fenêtre ordinaire, déplaçable et redimensionnable. |
 | `TileWidth`, `TileHeight` | 320, 300 | Taille des tuiles de jeux. |
 | `ButtonMinSize` | 150 | Taille minimale de tout bouton. |
