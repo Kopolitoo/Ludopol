@@ -1,0 +1,20 @@
+<UserControl x:Class="Ludopol.HomePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Ludopol">
+    <!-- Home: the ways to browse the catalogue, as big tiles. -->
+    <WrapPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+        <WrapPanel.Resources>
+            <Style TargetType="{x:Type local:TileButton}" BasedOn="{StaticResource {x:Type local:TileButton}}">
+                <Setter Property="Width" Value="{DynamicResource TileWidth}" />
+                <Setter Property="Height" Value="{DynamicResource TileHeight}" />
+                <Setter Property="FontSize" Value="{DynamicResource TitleFontSize}" />
+            </Style>
+        </WrapPanel.Resources>
+        <local:TileButton Content="{local:Tr home.categories}" Click="OnCategoriesClick" />
+        <local:TileButton Content="{local:Tr home.tags}" Click="OnTagsClick" />
+        <local:TileButton Content="{local:Tr home.developers}" Click="OnDevelopersClick" />
+        <local:TileButton Content="{local:Tr home.recent}" Click="OnRecentClick" />
+        <local:TileButton Content="{local:Tr home.all}" Click="OnAllClick" />
+    </WrapPanel>
+</UserControl>

@@ -1,0 +1,44 @@
+<UserControl x:Class="Ludopol.GameListPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Ludopol">
+    <!--
+      A list of games: the game tiles (image, name, compatibility gauge), which scroll.
+      The filter buttons are in a column on the left, made in code (SideContent).
+    -->
+    <Grid>
+        <TextBlock x:Name="EmptyText" Text="{local:Tr list.empty}" Visibility="Collapsed"
+                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                   Foreground="{StaticResource MutedTextBrush}" />
+
+        <local:ScrollPanel x:Name="Scroll">
+            <ItemsControl x:Name="Games">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <local:TileButton Width="{DynamicResource TileWidth}" Padding="10" Click="OnGameClick"
+                                          HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top">
+                            <StackPanel>
+                                <Grid Height="{DynamicResource TileImageHeight}" ClipToBounds="True">
+                                    <!-- Letters on a plain background, hidden by the image when there is one. -->
+                                    <Border Background="{StaticResource PlaceholderBrush}" CornerRadius="8">
+                                        <TextBlock Text="{Binding Initials}" FontSize="{DynamicResource TitleFontSize}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <Image Source="{Binding ImageUrl, TargetNullValue={x:Null}}" Stretch="UniformToFill" />
+                                </Grid>
+                                <!-- The name wraps on several lines: never cut. -->
+                                <TextBlock Text="{Binding Name}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,8,0,6" FontSize="{DynamicResource SmallFontSize}" />
+                                <local:CompatibilityBar Level="{Binding Compatibility}" Height="16" />
+                            </StackPanel>
+                        </local:TileButton>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </local:ScrollPanel>
+    </Grid>
+</UserControl>
