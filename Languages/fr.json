@@ -135,5 +135,8 @@
   "steamStore.running": "Fiches en cours de complétion…",
   "steamStore.progress": "Fiches complétées depuis Steam : {0} sur {1}… (on peut continuer à utiliser Ludopol)",
   "steamStore.done": "{0} fiches complétées depuis Steam sur {1}.",
-  "steamStore.free": "Gratuit"
+  "steamStore.free": "Gratuit",
+  "details.editCategories": "Modifier les catégories",
+  "menu.add": "Ajouter",
+  "menu.done": "Terminé"
 }

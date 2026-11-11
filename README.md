@@ -84,7 +84,11 @@ réduit à chaque lettre, sans tenir compte des majuscules ni des accents.
 ## Fiche d'un jeu
 
 Les catégories, les tags Steam et le développeur sont des boutons : chacun ouvre la liste des
-jeux qui l'ont (« Retour » ramène à la fiche).
+jeux qui l'ont (« Retour » ramène à la fiche). « Modifier les catégories », au bout de la rangée des
+catégories, ouvre la liste de toutes les catégories : chaque bouton s'allume (bleu) ou s'éteint,
+un champ permet d'en créer une nouvelle, « Terminé » enregistre. Choisir une vraie catégorie
+retire « À trier (Steam) ». Attention : réimporter la feuille remet les catégories de la feuille
+pour les jeux qui y sont.
 
 Un jeu Steam pas installé propose « Installer avec Steam » s'il est possédé. Tout jeu présent
 sur Steam a « Voir le jeu sur le magasin Steam » (page dans Steam, ou dans le navigateur sans

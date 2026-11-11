@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -313,11 +314,11 @@ namespace Ludopol
             AddLine(string.Join("  ·  ", NonEmpty(game.ReleaseDate, game.Price)), muted: true);
             AddLine(game.Description ?? Texts.Get("details.noDescription"));
             // Categories, tags and developer are buttons: each one opens the list of its games.
-            if (game.Categories.Count > 0)
-            {
-                AddTitle("details.categories");
-                AddLinks(game.Categories, name => new GameFilter { Category = name });
-            }
+            // Categories: always shown, with "Change the categories" at the end of the row.
+            AddTitle("details.categories");
+            AddLinks(game.Categories, name => new GameFilter { Category = name });
+            TileButton editCategories = MenuButton(Texts.Get("details.editCategories"), EditCategories);
+            ((WrapPanel)Info.Children[Info.Children.Count - 1]).Children.Add(editCategories);
             if (game.Tags.Count > 0)
             {
                 AddTitle("details.tags");
@@ -407,6 +408,39 @@ namespace Ludopol
                 choices.Add(new MenuChoice(content, level == game.Compatibility, () => game.Compatibility = level));
             }
             ChoiceMenu.Show(Texts.Get("details.compatibility"), choices, () => SaveChange(() => { }));
+        }
+
+        /// <summary>
+        /// Choosing the game's categories among those of the catalogue (or a new one). Choosing
+        /// a real category takes the game out of "To sort (Steam)".
+        /// </summary>
+        private void EditCategories()
+        {
+            if (_game == null)
+            {
+                return;
+            }
+            Game game = _game;
+            string toSort = Texts.Get("steamSync.newCategory");
+            List<string> names = App.Database.GetCategories().Select(c => c.Name).ToList();
+            ChoiceMenu.ShowSeveral(Texts.Get("details.editCategories"), names, game.Categories, chosen =>
+            {
+                if (chosen.Any(c => c != toSort))
+                {
+                    chosen.Remove(toSort);
+                }
+                SaveCategories(game, chosen);
+            });
+        }
+
+        private void SaveCategories(Game game, List<string> categories)
+        {
+            SaveNotes();
+            game.Categories = categories;
+            App.Database.UpdateFromImport(game);   // saves the game with its categories and tags
+            double offset = Scroll.Viewer.VerticalOffset;
+            BuildInfo(game);
+            Scroll.Viewer.ScrollToVerticalOffset(offset);
         }
 
         private void ShowRatingMenu()

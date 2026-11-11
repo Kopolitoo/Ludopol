@@ -135,5 +135,8 @@
   "steamStore.running": "Completing the pages…",
   "steamStore.progress": "Pages completed from Steam: {0} of {1}… (Ludopol can be used meanwhile)",
   "steamStore.done": "{0} pages completed from Steam out of {1}.",
-  "steamStore.free": "Free"
+  "steamStore.free": "Free",
+  "details.editCategories": "Change the categories",
+  "menu.add": "Add",
+  "menu.done": "Done"
 }

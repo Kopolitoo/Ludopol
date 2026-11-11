@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -67,6 +68,78 @@ namespace Ludopol
                 _choices.Children.Add(button);
             }
             Visibility = Visibility.Visible;
+        }
+
+        /// <summary>
+        /// Opens the menu to choose several names (a game's categories): each button switches
+        /// its name on (blue) or off; a field and "Add" create a new name; "Done" calls done
+        /// with the names chosen. "Cancel" changes nothing.
+        /// </summary>
+        public void ShowSeveral(string title, IEnumerable<string> names, IEnumerable<string> chosen, Action<List<string>> done)
+        {
+            List<string> all = new List<string>(names);
+            HashSet<string> selected = new HashSet<string>(chosen);
+            foreach (string name in selected)
+            {
+                if (!all.Contains(name))
+                {
+                    all.Add(name);
+                }
+            }
+
+            _title.Text = title;
+            _choices.Children.Clear();
+            foreach (string name in all)
+            {
+                AddToggle(name, selected);
+            }
+
+            // A new name: an ordinary field (Prunel's keyboard, Dragon) and "Add".
+            TextBox newName = new TextBox { VerticalContentAlignment = VerticalAlignment.Center };
+            newName.SetResourceReference(WidthProperty, "WideButtonWidth");
+            TileButton add = new TileButton { Content = Texts.Get("menu.add") };
+            add.SetResourceReference(WidthProperty, "WideButtonWidth");
+            add.Click += (s, e) =>
+            {
+                string name = newName.Text.Trim();
+                if (name.Length > 0 && !all.Contains(name))
+                {
+                    all.Add(name);
+                    selected.Add(name);
+                    // Before the field, with the other names.
+                    _choices.Children.Insert(_choices.Children.IndexOf(newName), Toggle(name, selected));
+                }
+                newName.Text = "";
+            };
+            TileButton finished = new TileButton { Content = Texts.Get("menu.done") };
+            finished.SetResourceReference(WidthProperty, "WideButtonWidth");
+            finished.Click += (s, e) =>
+            {
+                Hide();
+                done(all.Where(selected.Contains).ToList());
+            };
+            _choices.Children.Add(newName);
+            _choices.Children.Add(add);
+            _choices.Children.Add(finished);
+            Visibility = Visibility.Visible;
+        }
+
+        private void AddToggle(string name, HashSet<string> selected) => _choices.Children.Add(Toggle(name, selected));
+
+        private static TileButton Toggle(string name, HashSet<string> selected)
+        {
+            TileButton button = new TileButton { Content = name, IsSelected = selected.Contains(name) };
+            button.SetResourceReference(WidthProperty, "WideButtonWidth");
+            button.SetResourceReference(Control.FontSizeProperty, "SmallFontSize");
+            button.Click += (s, e) =>
+            {
+                if (!selected.Remove(name))
+                {
+                    selected.Add(name);
+                }
+                button.IsSelected = selected.Contains(name);
+            };
+            return button;
         }
 
         public void Hide() => Visibility = Visibility.Collapsed;
