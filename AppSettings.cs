@@ -29,6 +29,9 @@ namespace Ludopol
         /// <summary>true: full screen, without frame; false: an ordinary window, which can be moved and resized.</summary>
         public bool FullScreen { get; set; } = true;
 
+        /// <summary>The last games sheet imported (settings page, "Import again").</summary>
+        public string? LastImportPath { get; set; }
+
         /// <summary>Width and height of a game tile in the lists.</summary>
         public double TileWidth { get; set; } = 320;
         public double TileHeight { get; set; } = 300;

@@ -144,26 +144,7 @@ namespace Ludopol
                 lastId.CommandText = "SELECT last_insert_rowid()";
                 game.Id = (long)lastId.ExecuteScalar()!;
 
-                foreach (string category in game.Categories.Distinct())
-                {
-                    SqliteCommand insert = connection.CreateCommand();
-                    insert.Transaction = transaction;
-                    insert.CommandText = "INSERT INTO game_categories (game_id, name) VALUES ($id, $name)";
-                    insert.Parameters.AddWithValue("$id", game.Id);
-                    insert.Parameters.AddWithValue("$name", category);
-                    insert.ExecuteNonQuery();
-                }
-                int position = 0;
-                foreach (string tag in game.Tags.Distinct())
-                {
-                    SqliteCommand insert = connection.CreateCommand();
-                    insert.Transaction = transaction;
-                    insert.CommandText = "INSERT INTO game_tags (game_id, name, position) VALUES ($id, $name, $position)";
-                    insert.Parameters.AddWithValue("$id", game.Id);
-                    insert.Parameters.AddWithValue("$name", tag);
-                    insert.Parameters.AddWithValue("$position", position++);
-                    insert.ExecuteNonQuery();
-                }
+                InsertNames(connection, transaction, game);
                 transaction.Commit();
             }
         }
@@ -187,6 +168,98 @@ namespace Ludopol
                 command.Parameters.AddWithValue("$id", game.Id);
                 command.ExecuteNonQuery();
             }
+        }
+
+        /// <summary>
+        /// Finds a game: by its Steam number when it has one, otherwise by its name (case
+        /// ignored). Returns it with its categories and tags, or null.
+        /// </summary>
+        public Game? FindGame(long? steamAppId, string name)
+        {
+            using (SqliteConnection connection = Connect())
+            {
+                SqliteCommand command = connection.CreateCommand();
+                if (steamAppId.HasValue)
+                {
+                    command.CommandText = "SELECT id FROM games WHERE steam_app_id = $steam LIMIT 1";
+                    command.Parameters.AddWithValue("$steam", steamAppId.Value);
+                    if (command.ExecuteScalar() is long byId)
+                    {
+                        return GetGame(byId);
+                    }
+                }
+                command = connection.CreateCommand();
+                command.CommandText = "SELECT id FROM games WHERE lower(name) = lower($name) LIMIT 1";
+                command.Parameters.AddWithValue("$name", name.Trim());
+                return command.ExecuteScalar() is long byName ? GetGame(byName) : null;
+            }
+        }
+
+        /// <summary>Saves every field of a game (after an import), with its categories and tags.</summary>
+        public void UpdateFromImport(Game game)
+        {
+            using (SqliteConnection connection = Connect())
+            using (SqliteTransaction transaction = connection.BeginTransaction())
+            {
+                SqliteCommand command = connection.CreateCommand();
+                command.Transaction = transaction;
+                command.CommandText = @"
+                    UPDATE games SET name = $name, steam_app_id = $steam, image_url = $image,
+                        description = $description, release_date = $release, developer = $developer,
+                        genres = $genres, price = $price, french = $french, owned_on_steam = $owned,
+                        tried = $tried, compatibility = $compatibility, rating = $rating, notes = $notes,
+                        to_publish = $publish
+                    WHERE id = $id";
+                command.Parameters.AddWithValue("$name", game.Name);
+                command.Parameters.AddWithValue("$steam", (object?)game.SteamAppId ?? DBNull.Value);
+                command.Parameters.AddWithValue("$image", (object?)game.ImageUrl ?? DBNull.Value);
+                command.Parameters.AddWithValue("$description", (object?)game.Description ?? DBNull.Value);
+                command.Parameters.AddWithValue("$release", (object?)game.ReleaseDate ?? DBNull.Value);
+                command.Parameters.AddWithValue("$developer", (object?)game.Developer ?? DBNull.Value);
+                command.Parameters.AddWithValue("$genres", (object?)game.Genres ?? DBNull.Value);
+                command.Parameters.AddWithValue("$price", (object?)game.Price ?? DBNull.Value);
+                command.Parameters.AddWithValue("$french", game.French.HasValue ? (object)(game.French.Value ? 1 : 0) : DBNull.Value);
+                command.Parameters.AddWithValue("$owned", game.OwnedOnSteam ? 1 : 0);
+                command.Parameters.AddWithValue("$tried", game.Tried ? 1 : 0);
+                command.Parameters.AddWithValue("$compatibility", (int)game.Compatibility);
+                command.Parameters.AddWithValue("$rating", (object?)game.Rating ?? DBNull.Value);
+                command.Parameters.AddWithValue("$notes", string.IsNullOrWhiteSpace(game.Notes) ? DBNull.Value : game.Notes);
+                command.Parameters.AddWithValue("$publish", game.ToPublish ? 1 : 0);
+                command.Parameters.AddWithValue("$id", game.Id);
+                command.ExecuteNonQuery();
+
+                SqliteCommand clear = connection.CreateCommand();
+                clear.Transaction = transaction;
+                clear.CommandText = "DELETE FROM game_categories WHERE game_id = $id; DELETE FROM game_tags WHERE game_id = $id;";
+                clear.Parameters.AddWithValue("$id", game.Id);
+                clear.ExecuteNonQuery();
+                InsertNames(connection, transaction, game);
+                transaction.Commit();
+            }
+        }
+
+        /// <summary>
+        /// Removes the fictitious games (SampleGames.cs) if they are still there: same name and
+        /// no Steam number. Returns how many were removed.
+        /// </summary>
+        public int DeleteSampleGames()
+        {
+            int removed = 0;
+            using (SqliteConnection connection = Connect())
+            {
+                foreach (Game sample in SampleGames.Create())
+                {
+                    SqliteCommand command = connection.CreateCommand();
+                    command.CommandText = "DELETE FROM games WHERE name = $name AND steam_app_id IS NULL";
+                    command.Parameters.AddWithValue("$name", sample.Name);
+                    removed += command.ExecuteNonQuery();
+                }
+            }
+            if (removed > 0)
+            {
+                App.Log("Database: " + removed + " fictitious game(s) removed");
+            }
+            return removed;
         }
 
         /// <summary>The games matching a filter (without their categories and tags, not needed in lists).</summary>
@@ -305,6 +378,31 @@ namespace Ludopol
                 .OrderBy(c => c.Name, NameOrder).ToList();
 
         // ----- Helpers -----
+
+        /// <summary>Writes a game's categories and tags (tags in Steam's order).</summary>
+        private static void InsertNames(SqliteConnection connection, SqliteTransaction transaction, Game game)
+        {
+            foreach (string category in game.Categories.Distinct())
+            {
+                SqliteCommand insert = connection.CreateCommand();
+                insert.Transaction = transaction;
+                insert.CommandText = "INSERT INTO game_categories (game_id, name) VALUES ($id, $name)";
+                insert.Parameters.AddWithValue("$id", game.Id);
+                insert.Parameters.AddWithValue("$name", category);
+                insert.ExecuteNonQuery();
+            }
+            int position = 0;
+            foreach (string tag in game.Tags.Distinct())
+            {
+                SqliteCommand insert = connection.CreateCommand();
+                insert.Transaction = transaction;
+                insert.CommandText = "INSERT INTO game_tags (game_id, name, position) VALUES ($id, $name, $position)";
+                insert.Parameters.AddWithValue("$id", game.Id);
+                insert.Parameters.AddWithValue("$name", tag);
+                insert.Parameters.AddWithValue("$position", position++);
+                insert.ExecuteNonQuery();
+            }
+        }
 
         private SqliteConnection Connect()
         {

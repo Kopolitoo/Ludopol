@@ -9,9 +9,24 @@ les lancer.
 
 ## État
 
-Étape 2 : squelette et navigation. Le catalogue contient deux jeux **fictifs** pour essayer
-l'interface. L'import de la feuille de jeux (étape 3) et le bouton « Jouer » (étape 4) viendront
-ensuite.
+Étape 3 : import de la feuille de jeux. Au départ, le catalogue contient deux jeux **fictifs**
+pour essayer l'interface ; ils sont retirés au premier import. Le bouton « Jouer » (étape 4)
+viendra ensuite.
+
+## Importer la feuille de jeux
+
+Paramètres → « Choisir la feuille (.xlsx)… », puis choisir l'export Excel de la feuille Google
+(Fichier → Télécharger → Microsoft Excel). L'export CSV ne convient pas : il perd les liens Steam
+et les images.
+
+- Les colonnes sont reconnues par leur titre : Jeu, Catégories, Essayé avec ma poursuite,
+  Compatibilité, Ma note (1-5), Mes remarques, À publier, Lien Steam, Image, Description,
+  Date de sortie, Développeur, Genres, Tags Steam, Prix, Français (et « Possédé sur Steam » si
+  la colonne existe).
+- Réimporter met à jour les données Steam, les catégories et les tags, mais ne remplace jamais
+  ce qui a été rempli dans Ludopol (note, compatibilité, essayé, remarques, à publier, possédé).
+- Deux lignes avec le même lien Steam : celle dont le nom correspond au texte du lien garde les
+  données Steam, l'autre est importée sans, et son nom est signalé pour corriger la feuille.
 
 ## Compiler et lancer
 
