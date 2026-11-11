@@ -108,13 +108,13 @@ Un jeu Steam pas installé propose « Installer avec Steam » s'il est possédé
 sur Steam a « Voir le jeu sur le magasin Steam » (page dans Steam, ou dans le navigateur sans
 Steam). « Choisir le programme du jeu… » n'est proposé que pour un jeu non possédé sur Steam.
 
-### Essai : dictée directe avec Dragon
+### Mes remarques (dictée Dragon)
 
-Sous « Mes remarques », « Dicter mes remarques (Dragon) » ouvre les mêmes remarques dans une
-vraie zone de texte Windows (contrôle Windows Forms), sur toute la page. Dragon ne reconnaît pas
-les champs de WPF ; cette zone est du même type que celle du Bloc-notes et devrait permettre la
-dictée directe (« Full-Text Control »). « Retour » enregistre. C'est un essai : selon le résultat,
-la zone Windows remplacera le champ actuel, ou il faudra une autre piste.
+La fiche affiche mes remarques sans champ de saisie, pour que le clavier serve toujours aux
+raccourcis. « Modifier mes remarques » les ouvre sur toute une page, dans une vraie zone de texte
+Windows (contrôle Windows Forms, comme celle du Bloc-notes) : Dragon y dicte directement
+(« Full-Text Control »), ce qu'il ne fait pas dans les champs de WPF. Dans cette page, toutes les
+touches vont au texte ; « Retour » enregistre et rend le clavier à Ludopol.
 
 ## Compiler et lancer
 

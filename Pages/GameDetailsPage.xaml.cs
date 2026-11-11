@@ -27,7 +27,6 @@ namespace Ludopol
     {
         private readonly long _gameId;
         private Game? _game;
-        private TextBox? _notesBox;
 
         /// <summary>What happened after a button under the image (launch error…), shown under them.</summary>
         private string? _actionMessage;
@@ -59,28 +58,12 @@ namespace Ludopol
             CompleteFromSteam(_game);
         }
 
-        /// <summary>Saves my notes if they changed.</summary>
         public void OnLeaving()
         {
             Application.Current.Activated -= OnAppActivated;
             PlayPanel.Visibility = Visibility.Collapsed;
             ChoiceMenu.Hide();
             _actionMessage = null;
-            SaveNotes();
-        }
-
-        private void SaveNotes()
-        {
-            if (_game == null || _notesBox == null)
-            {
-                return;
-            }
-            string? notes = string.IsNullOrWhiteSpace(_notesBox.Text) ? null : _notesBox.Text.Trim();
-            if (notes != _game.Notes)
-            {
-                _game.Notes = notes;
-                App.Database.SaveUserFields(_game);
-            }
         }
 
         /// <summary>
@@ -386,22 +369,17 @@ namespace Ludopol
             row.Children.Add(Toggle("details.toPublish", game.ToPublish, () => game.ToPublish = !game.ToPublish));
             Info.Children.Add(row);
 
+            // No text field on this page: it would take the keyboard (shortcuts) and Dragon
+            // cannot dictate into a WPF field. The notes are written on their own page
+            // (NotesPage), in a Windows field Dragon dictates into.
             AddTitle("details.notes");
-            _notesBox = new TextBox
-            {
-                Text = game.Notes ?? "",
-                AcceptsReturn = true,
-                TextWrapping = TextWrapping.Wrap,
-                MinHeight = (double)FindResource("ButtonMinSize") * 1.5,
-            };
-            Info.Children.Add(_notesBox);
-
-            // Trial: the same notes in a real Windows field, for Dragon's direct dictation.
-            TileButton dictate = MenuButton(Texts.Get("details.dictateNotes"),
+            AddLine(string.IsNullOrWhiteSpace(game.Notes) ? Texts.Get("details.notes.none") : game.Notes!,
+                muted: string.IsNullOrWhiteSpace(game.Notes));
+            TileButton edit = MenuButton(Texts.Get("details.editNotes"),
                 () => MainWindow.Current.Navigate(new NotesPage(game.Id)));
-            dictate.HorizontalAlignment = HorizontalAlignment.Left;
-            dictate.Margin = new Thickness(0, 12, 0, 0);
-            Info.Children.Add(dictate);
+            edit.HorizontalAlignment = HorizontalAlignment.Left;
+            edit.Margin = new Thickness(12, 12, 0, 0);
+            Info.Children.Add(edit);
         }
 
         /// <summary>A yes/no field: one button, blue when yes; each activation switches it.</summary>
@@ -473,7 +451,6 @@ namespace Ludopol
 
         private void SaveCategories(Game game, List<string> categories)
         {
-            SaveNotes();
             game.Categories = categories;
             App.Database.UpdateFromImport(game);   // saves the game with its categories and tags
             double offset = Scroll.Viewer.VerticalOffset;
@@ -505,7 +482,6 @@ namespace Ludopol
                 return;
             }
             change();
-            SaveNotes();   // keeps the notes typed so far
             App.Database.SaveUserFields(_game);
             double offset = Scroll.Viewer.VerticalOffset;
             BuildInfo(_game);

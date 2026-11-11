@@ -161,6 +161,7 @@
   "sort.count": "Nombre de jeux",
   "sort.count.ascending": "Moins de jeux d'abord",
   "sort.count.descending": "Plus de jeux d'abord",
-  "details.dictateNotes": "Dicter mes remarques (Dragon)",
-  "notes.title": "Mes remarques : {0}"
+  "notes.title": "Mes remarques : {0}",
+  "details.editNotes": "Modifier mes remarques",
+  "details.notes.none": "Pas encore de remarques."
 }

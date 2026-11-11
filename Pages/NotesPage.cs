@@ -7,7 +7,7 @@ using System.Windows.Media;
 namespace Ludopol
 {
     /// <summary>
-    /// VIEW (TRIAL): my notes on a game, written in a real Windows text field so that Dragon
+    /// VIEW: my notes on a game, written in a real Windows text field so that Dragon
     /// can dictate into it directly ("Full-Text Control").
     ///
     /// WPF draws its own text fields, which Dragon does not recognise (it then opens its

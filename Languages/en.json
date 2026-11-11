@@ -161,6 +161,7 @@
   "sort.count": "Number of games",
   "sort.count.ascending": "Fewest games first",
   "sort.count.descending": "Most games first",
-  "details.dictateNotes": "Dictate my notes (Dragon)",
-  "notes.title": "My notes: {0}"
+  "notes.title": "My notes: {0}",
+  "details.editNotes": "Edit my notes",
+  "details.notes.none": "No notes yet."
 }
