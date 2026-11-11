@@ -291,7 +291,7 @@ namespace Ludopol
             Info.Children.Add(new CompatibilityBar { Level = game.Compatibility, Height = 24, Margin = new Thickness(12, 12, 12, 0) });
             AddChoices(new[]
             {
-                Compatibility.Unknown, Compatibility.None, Compatibility.PartialWithSwitch,
+                Compatibility.Unknown, Compatibility.Presumed, Compatibility.None, Compatibility.PartialWithSwitch,
                 Compatibility.PartialGaze, Compatibility.Full,
             }, CompatibilityTexts.Name, game.Compatibility, value => game.Compatibility = value);
 

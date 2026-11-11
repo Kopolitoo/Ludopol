@@ -5,6 +5,7 @@
     <!--
       A list of games: the game tiles (image, name, compatibility gauge), which scroll.
       The filter buttons are in a column on the left, made in code (SideContent).
+      CompatibilityMenu covers the list while the compatibility filter's choices are shown.
     -->
     <Grid>
         <TextBlock x:Name="EmptyText" Text="{local:Tr list.empty}" Visibility="Collapsed"
@@ -40,5 +41,16 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </local:ScrollPanel>
+
+        <!-- The compatibility filter's menu, over the list (GameListPage.ShowCompatibilityMenu). -->
+        <Grid x:Name="CompatibilityMenu" Visibility="Collapsed" Background="#F21E1E24">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="{local:Tr filter.compatibility.title}" FontSize="{DynamicResource TitleFontSize}"
+                           TextWrapping="Wrap" TextAlignment="Center" Margin="12,0,12,24" />
+                <WrapPanel x:Name="CompatibilityChoicesPanel" HorizontalAlignment="Center" />
+                <local:TileButton Content="{local:Tr filter.compatibility.cancel}" Width="{DynamicResource WideButtonWidth}"
+                                  HorizontalAlignment="Center" Margin="0,24,0,0" Click="OnCompatibilityMenuCancel" />
+            </StackPanel>
+        </Grid>
     </Grid>
 </UserControl>

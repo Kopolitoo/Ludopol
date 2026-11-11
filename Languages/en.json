@@ -28,8 +28,7 @@
   "filter.tried.all": "Tried or not",
   "filter.tried.yes": "Tried",
   "filter.tried.no": "Not tried yet",
-  "filter.compatibility.all": "Any compatibility",
-  "filter.compatibility.atLeast": "At least: {0}",
+  "filter.compatibility.all": "Every compatibility",
   "filter.rating.all": "Any rating",
   "filter.rating.atLeast": "Rating {0} or more",
   "filter.rating.five": "Rating {0}",
@@ -116,5 +115,9 @@
   "settings.section.catalogue": "Catalogue: import and installed games",
   "steamSync.missingTitle": "Games bought, not in the catalogue",
   "steamSync.seeMissing": "See the {0} games not in the catalogue",
-  "steamSync.noneMissing": "Every game bought is in the catalogue."
+  "steamSync.noneMissing": "Every game bought is in the catalogue.",
+  "compatibility.presumed": "Presumed (not tried yet)",
+  "filter.compatibility.is": "Compatibility: {0}",
+  "filter.compatibility.title": "Which compatibility to show?",
+  "filter.compatibility.cancel": "Cancel"
 }

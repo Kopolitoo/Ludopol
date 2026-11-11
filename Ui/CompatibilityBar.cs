@@ -13,6 +13,7 @@ namespace Ludopol
     ///   Partial (switch, reflexes)  2 segments, orange
     ///   Partial (gaze, complex)     3 segments, yellow
     ///   Full                        4 segments, green
+    ///   Presumed (not tried yet)    4 segments, blue-grey
     /// </summary>
     public class CompatibilityBar : UniformGrid
     {
@@ -48,14 +49,15 @@ namespace Ludopol
                 case Compatibility.PartialWithSwitch: return Freeze(new SolidColorBrush(Color.FromRgb(0xE8, 0x89, 0x2B)));
                 case Compatibility.PartialGaze: return Freeze(new SolidColorBrush(Color.FromRgb(0xD8, 0xC2, 0x3A)));
                 case Compatibility.Full: return Freeze(new SolidColorBrush(Color.FromRgb(0x3D, 0xAF, 0x5A)));
+                case Compatibility.Presumed: return Freeze(new SolidColorBrush(Color.FromRgb(0x5B, 0x7D, 0xB1)));
                 default: return EmptyBrush;
             }
         }
 
         private void Redraw()
         {
-            // Unknown = 0, None = 1 … Full = 4: the number of coloured segments.
-            int filled = (int)Level;
+            // Unknown = 0, None = 1 … Full = 4: the number of coloured segments. Presumed: all, in blue-grey.
+            int filled = Level == Compatibility.Presumed ? Children.Count : (int)Level;
             Brush brush = BrushOf(Level);
             for (int i = 0; i < Children.Count; i++)
             {

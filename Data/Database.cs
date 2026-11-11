@@ -403,10 +403,10 @@ namespace Ludopol
                     sql.Append(" AND g.owned_on_steam = $owned");
                     command.Parameters.AddWithValue("$owned", filter.OwnedOnSteam.Value ? 1 : 0);
                 }
-                if (filter.MinCompatibility.HasValue)
+                if (filter.ExactCompatibility.HasValue)
                 {
-                    sql.Append(" AND g.compatibility >= $compatibility");
-                    command.Parameters.AddWithValue("$compatibility", (int)filter.MinCompatibility.Value);
+                    sql.Append(" AND g.compatibility = $compatibility");
+                    command.Parameters.AddWithValue("$compatibility", (int)filter.ExactCompatibility.Value);
                 }
                 if (filter.MinRating.HasValue)
                 {

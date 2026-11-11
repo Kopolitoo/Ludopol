@@ -22,6 +22,9 @@ et les images.
   Compatibilité, Ma note (1-5), Mes remarques, À publier, Lien Steam, Image, Description,
   Date de sortie, Développeur, Genres, Tags Steam, Prix, Français (et « Possédé sur Steam » si
   la colonne existe).
+- La feuille liste des jeux réputés jouables au regard : un jeu sans compatibilité dans la
+  feuille devient « Supposée (pas encore essayée) » (jauge bleu-gris). Réimporter la feuille
+  l'applique aussi aux jeux déjà importés restés « Inconnue ».
 - Réimporter met à jour les données Steam, les catégories et les tags, mais ne remplace jamais
   ce qui a été rempli dans Ludopol (note, compatibilité, essayé, remarques, à publier, possédé).
 - Deux lignes avec le même lien Steam : celle dont le nom correspond au texte du lien garde les

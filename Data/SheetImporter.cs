@@ -170,6 +170,11 @@ namespace Ludopol
             game.Tags = SplitList(Text(row, "Tags Steam"), ',');
             game.Tried = IsYes(Text(row, "Essayé avec ma poursuite"));
             game.Compatibility = ParseCompatibility(Text(row, "Compatibilité"));
+            if (game.Compatibility == Compatibility.Unknown)
+            {
+                // The sheet lists games said to be playable with the eyes: not tried yet, presumed.
+                game.Compatibility = Compatibility.Presumed;
+            }
             game.Rating = int.TryParse(Text(row, "Ma note (1-5)").Split('.')[0], out int rating) && rating >= 1 && rating <= 5 ? rating : null;
             game.Notes = NullIfEmpty(Text(row, "Mes remarques"));
             game.ToPublish = IsYes(Text(row, "À publier"));

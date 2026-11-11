@@ -13,8 +13,12 @@ namespace Ludopol
     /// </summary>
     public partial class GameListPage : UserControl, IPage
     {
-        private static readonly Compatibility?[] CompatibilitySteps =
-            { null, Compatibility.PartialWithSwitch, Compatibility.PartialGaze, Compatibility.Full };
+        /// <summary>The choices of the compatibility menu, best first; null: all.</summary>
+        private static readonly Compatibility?[] CompatibilityChoices =
+        {
+            null, Compatibility.Full, Compatibility.PartialGaze, Compatibility.PartialWithSwitch,
+            Compatibility.Presumed, Compatibility.Unknown, Compatibility.None,
+        };
         private static readonly int?[] RatingSteps = { null, 3, 4, 5 };
         private static readonly bool?[] YesNoSteps = { null, true, false };
 
@@ -60,7 +64,10 @@ namespace Ludopol
             EmptyText.Visibility = games.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        public void OnLeaving() { }
+        public void OnLeaving()
+        {
+            CompatibilityMenu.Visibility = Visibility.Collapsed;
+        }
 
         private void OnGameClick(object sender, RoutedEventArgs e)
         {
@@ -92,8 +99,50 @@ namespace Ludopol
 
         private void OnCompatibilityFilterClick(object sender, RoutedEventArgs e)
         {
-            _filter.MinCompatibility = Next(CompatibilitySteps, _filter.MinCompatibility);
-            ApplyFilter();
+            ShowCompatibilityMenu();
+        }
+
+        /// <summary>
+        /// The compatibility filter has too many values for a loop: it opens a menu of big
+        /// buttons over the list (CompatibilityMenu), one per level, the current one in blue.
+        /// </summary>
+        private void ShowCompatibilityMenu()
+        {
+            CompatibilityChoicesPanel.Children.Clear();
+            foreach (Compatibility? level in CompatibilityChoices)
+            {
+                TileButton button = new TileButton
+                {
+                    Content = Texts.Get("filter.compatibility.all"),
+                    IsSelected = level == _filter.ExactCompatibility,
+                };
+                button.SetResourceReference(WidthProperty, "WideButtonWidth");
+                if (level is Compatibility shown)
+                {
+                    // The name with its gauge under it, as on the tiles.
+                    button.Content = new StackPanel
+                    {
+                        Children =
+                        {
+                            new TextBlock { Text = CompatibilityTexts.Name(shown), TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center },
+                            new CompatibilityBar { Level = shown, Height = 16, Margin = new Thickness(0, 10, 0, 0) },
+                        },
+                    };
+                }
+                button.Click += (s, e) =>
+                {
+                    CompatibilityMenu.Visibility = Visibility.Collapsed;
+                    _filter.ExactCompatibility = level;
+                    ApplyFilter();
+                };
+                CompatibilityChoicesPanel.Children.Add(button);
+            }
+            CompatibilityMenu.Visibility = Visibility.Visible;
+        }
+
+        private void OnCompatibilityMenuCancel(object sender, RoutedEventArgs e)
+        {
+            CompatibilityMenu.Visibility = Visibility.Collapsed;
         }
 
         private void OnRatingFilterClick(object sender, RoutedEventArgs e)
@@ -134,10 +183,10 @@ namespace Ludopol
             });
             _triedFilter.IsSelected = _filter.Tried.HasValue;
 
-            _compatibilityFilter.Content = _filter.MinCompatibility is Compatibility minimum
-                ? Texts.Format("filter.compatibility.atLeast", CompatibilityTexts.Name(minimum))
+            _compatibilityFilter.Content = _filter.ExactCompatibility is Compatibility level
+                ? Texts.Format("filter.compatibility.is", CompatibilityTexts.Name(level))
                 : Texts.Get("filter.compatibility.all");
-            _compatibilityFilter.IsSelected = _filter.MinCompatibility.HasValue;
+            _compatibilityFilter.IsSelected = _filter.ExactCompatibility.HasValue;
 
             _ratingFilter.Content = _filter.MinRating is int rating
                 ? Texts.Format(rating == 5 ? "filter.rating.five" : "filter.rating.atLeast", rating)
@@ -162,6 +211,7 @@ namespace Ludopol
             Compatibility.PartialWithSwitch => "compatibility.partialSwitch",
             Compatibility.PartialGaze => "compatibility.partialGaze",
             Compatibility.Full => "compatibility.full",
+            Compatibility.Presumed => "compatibility.presumed",
             _ => "compatibility.unknown",
         });
     }
