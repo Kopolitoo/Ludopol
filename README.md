@@ -66,6 +66,11 @@ mettre « Détails des jeux » sur Public.
 Dans les listes, le filtre « Installés » passe par « Installés seulement » et « Pas installés » ;
 avec « Possédés sur Steam », on voit les jeux achetés mais pas installés.
 
+## Fiche d'un jeu
+
+Les catégories, les tags Steam et le développeur sont des boutons : chacun ouvre la liste des
+jeux qui l'ont (« Retour » ramène à la fiche).
+
 ## Compiler et lancer
 
 1. Ouvrir `Ludopol.slnx` (ou `Ludopol.csproj`) dans Visual Studio 2022, avec la charge de travail

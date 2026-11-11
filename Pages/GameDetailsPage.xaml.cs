@@ -267,17 +267,23 @@ namespace Ludopol
             Info.Children.Clear();
 
             // --- What Steam says about the game ---
-            AddLine(string.Join("  ·  ", NonEmpty(game.Developer, game.ReleaseDate, game.Price)), muted: true);
+            AddLine(string.Join("  ·  ", NonEmpty(game.ReleaseDate, game.Price)), muted: true);
             AddLine(game.Description ?? Texts.Get("details.noDescription"));
+            // Categories, tags and developer are buttons: each one opens the list of its games.
             if (game.Categories.Count > 0)
             {
                 AddTitle("details.categories");
-                AddLine(string.Join("  ·  ", game.Categories));
+                AddLinks(game.Categories, name => new GameFilter { Category = name });
             }
             if (game.Tags.Count > 0)
             {
                 AddTitle("details.tags");
-                AddLine(string.Join("  ·  ", game.Tags));
+                AddLinks(game.Tags, name => new GameFilter { Tag = name });
+            }
+            if (!string.IsNullOrWhiteSpace(game.Developer))
+            {
+                AddTitle("details.developer");
+                AddLinks(new[] { game.Developer }, name => new GameFilter { Developer = name });
             }
 
             // --- What I note ---
@@ -332,6 +338,21 @@ namespace Ludopol
                 BuildInfo(_game);
                 Scroll.Viewer.ScrollToVerticalOffset(offset);
             }));
+        }
+
+        /// <summary>A row of buttons, one per name; each opens the list of the games with that name.</summary>
+        private void AddLinks(IEnumerable<string> names, Func<string, GameFilter> filter)
+        {
+            WrapPanel row = new WrapPanel();
+            foreach (string name in names)
+            {
+                TileButton button = new TileButton { Content = name };
+                button.SetResourceReference(MaxWidthProperty, "WideButtonWidth");
+                button.SetResourceReference(FontSizeProperty, "SmallFontSize");
+                button.Click += (s, e) => MainWindow.Current.Navigate(new GameListPage(filter(name), name));
+                row.Children.Add(button);
+            }
+            Info.Children.Add(row);
         }
 
         private void AddTitle(string key)
