@@ -77,7 +77,7 @@ namespace Ludopol
 
         public void OnLeaving()
         {
-            ChoiceMenu.Visibility = Visibility.Collapsed;
+            ChoiceMenu.Hide();
         }
 
         private void OnGameClick(object sender, RoutedEventArgs e)
@@ -115,7 +115,7 @@ namespace Ludopol
 
         /// <summary>
         /// The category and compatibility filters have too many values for a loop: each opens
-        /// a menu of big buttons over the list (ChoiceMenu), the current value in blue.
+        /// a menu of big buttons over the list (Ui/ChoiceMenu.cs), the current value in blue.
         /// </summary>
         private void ShowCompatibilityMenu()
         {
@@ -154,44 +154,8 @@ namespace Ludopol
             ShowMenu("filter.category.title", choices);
         }
 
-        private void ShowMenu(string titleKey, List<MenuChoice> choices)
-        {
-            ChoiceMenuTitle.Text = Texts.Get(titleKey);
-            ChoicePanel.Children.Clear();
-            foreach (MenuChoice choice in choices)
-            {
-                TileButton button = new TileButton { Content = choice.Content, IsSelected = choice.Selected };
-                button.SetResourceReference(WidthProperty, "WideButtonWidth");
-                button.Click += (s, e) =>
-                {
-                    ChoiceMenu.Visibility = Visibility.Collapsed;
-                    choice.Apply();
-                    ApplyFilter();
-                };
-                ChoicePanel.Children.Add(button);
-            }
-            ChoiceMenu.Visibility = Visibility.Visible;
-        }
-
-        private void OnChoiceMenuCancel(object sender, RoutedEventArgs e)
-        {
-            ChoiceMenu.Visibility = Visibility.Collapsed;
-        }
-
-        /// <summary>One button of a filter's menu: what it shows, whether it is the current value, what it sets.</summary>
-        private sealed class MenuChoice
-        {
-            public MenuChoice(object content, bool selected, Action apply)
-            {
-                Content = content;
-                Selected = selected;
-                Apply = apply;
-            }
-
-            public object Content { get; }
-            public bool Selected { get; }
-            public Action Apply { get; }
-        }
+        private void ShowMenu(string titleKey, List<MenuChoice> choices) =>
+            ChoiceMenu.Show(Texts.Get(titleKey), choices, ApplyFilter);
 
         private void OnRatingFilterClick(object sender, RoutedEventArgs e)
         {

@@ -43,5 +43,8 @@
                 </StackPanel>
             </StackPanel>
         </Grid>
+
+        <!-- The menus of compatibility and rating (Ui/ChoiceMenu.cs). -->
+        <local:ChoiceMenu x:Name="ChoiceMenu" />
     </Grid>
 </UserControl>

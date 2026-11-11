@@ -15,9 +15,10 @@ namespace Ludopol
     /// game is installed is checked again each time the page is shown and each time Ludopol
     /// comes back to the front (after an installation in Steam, for example).
     ///
-    /// The right part is built in code (BuildInfo), section by section. Each choice
-    /// (compatibility, owned on Steam, tried, rating, to publish) is a row of big buttons; the chosen one is
-    /// blue. A choice is saved in the database at once. "My notes" is an ordinary text field
+    /// The right part is built in code (BuildInfo), section by section. What I note fits on
+    /// one row: compatibility and rating open a menu (Ui/ChoiceMenu.cs), owned on Steam,
+    /// tried and to publish switch at each activation (blue = yes). A change is saved in the
+    /// database at once. "My notes" is an ordinary text field
     /// (Prunel's keyboard, Dragon): it is saved when the page is left.
     /// </summary>
     public partial class GameDetailsPage : UserControl, IPage
@@ -60,6 +61,7 @@ namespace Ludopol
         {
             Application.Current.Activated -= OnAppActivated;
             PlayPanel.Visibility = Visibility.Collapsed;
+            ChoiceMenu.Hide();
             _actionMessage = null;
             SaveNotes();
         }
@@ -286,27 +288,30 @@ namespace Ludopol
                 AddLinks(new[] { game.Developer }, name => new GameFilter { Developer = name });
             }
 
-            // --- What I note ---
-            AddTitle("details.compatibility");
-            Info.Children.Add(new CompatibilityBar { Level = game.Compatibility, Height = 24, Margin = new Thickness(12, 12, 12, 0) });
-            AddChoices(new[]
+            // --- What I note: one row of buttons ---
+            // Yes/no fields switch at each activation (blue = yes); compatibility and rating
+            // open a menu (Ui/ChoiceMenu.cs).
+            AddTitle("details.mine");
+            WrapPanel row = new WrapPanel();
+            row.Children.Add(MenuButton(new StackPanel
             {
-                Compatibility.Unknown, Compatibility.Presumed, Compatibility.None, Compatibility.PartialWithSwitch,
-                Compatibility.PartialGaze, Compatibility.Full,
-            }, CompatibilityTexts.Name, game.Compatibility, value => game.Compatibility = value);
-
-            AddTitle("details.ownedOnSteam");
-            AddChoices(new[] { true, false }, YesNo, game.OwnedOnSteam, value => game.OwnedOnSteam = value);
-
-            AddTitle("details.tried");
-            AddChoices(new[] { true, false }, YesNo, game.Tried, value => game.Tried = value);
-
-            AddTitle("details.rating");
-            AddChoices(new int?[] { null, 1, 2, 3, 4, 5 },
-                value => value?.ToString() ?? Texts.Get("details.rating.none"), game.Rating, value => game.Rating = value);
-
-            AddTitle("details.toPublish");
-            AddChoices(new[] { true, false }, YesNo, game.ToPublish, value => game.ToPublish = value);
+                Children =
+                {
+                    new TextBlock
+                    {
+                        Text = Field("details.compatibility", CompatibilityTexts.Name(game.Compatibility)),
+                        TextWrapping = TextWrapping.Wrap,
+                        TextAlignment = TextAlignment.Center,
+                    },
+                    new CompatibilityBar { Level = game.Compatibility, Height = 16, Margin = new Thickness(0, 10, 0, 0) },
+                },
+            }, ShowCompatibilityMenu));
+            row.Children.Add(MenuButton(
+                Field("details.rating", game.Rating?.ToString() ?? Texts.Get("details.rating.none")), ShowRatingMenu));
+            row.Children.Add(Toggle("details.ownedOnSteam", game.OwnedOnSteam, () => game.OwnedOnSteam = !game.OwnedOnSteam));
+            row.Children.Add(Toggle("details.tried", game.Tried, () => game.Tried = !game.Tried));
+            row.Children.Add(Toggle("details.toPublish", game.ToPublish, () => game.ToPublish = !game.ToPublish));
+            Info.Children.Add(row);
 
             AddTitle("details.notes");
             _notesBox = new TextBox
@@ -319,26 +324,83 @@ namespace Ludopol
             Info.Children.Add(_notesBox);
         }
 
-        /// <summary>
-        /// A row of big buttons for one of my fields (see Ui/ChoiceRow.cs). Choosing a value
-        /// saves it at once and redraws the page.
-        /// </summary>
-        private void AddChoices<T>(IEnumerable<T> values, Func<T, string> label, T current, Action<T> apply)
+        /// <summary>A yes/no field: one button, blue when yes; each activation switches it.</summary>
+        private TileButton Toggle(string nameKey, bool value, Action change)
         {
-            Info.Children.Add(ChoiceRow.Create(values, label, current, value =>
-            {
-                if (_game == null)
-                {
-                    return;
-                }
-                apply(value);
-                SaveNotes();   // keeps the notes typed so far
-                App.Database.SaveUserFields(_game);
-                double offset = Scroll.Viewer.VerticalOffset;
-                BuildInfo(_game);
-                Scroll.Viewer.ScrollToVerticalOffset(offset);
-            }));
+            TileButton button = MenuButton(Field(nameKey, YesNo(value)), () => SaveChange(change));
+            button.IsSelected = value;
+            return button;
         }
+
+        private TileButton MenuButton(object content, Action onClick)
+        {
+            TileButton button = new TileButton { Content = content };
+            button.SetResourceReference(WidthProperty, "WideButtonWidth");
+            button.SetResourceReference(FontSizeProperty, "SmallFontSize");
+            button.Click += (s, e) => onClick();
+            return button;
+        }
+
+        private void ShowCompatibilityMenu()
+        {
+            if (_game == null)
+            {
+                return;
+            }
+            Game game = _game;
+            List<MenuChoice> choices = new List<MenuChoice>();
+            foreach (Compatibility level in new[]
+            {
+                Compatibility.Full, Compatibility.PartialGaze, Compatibility.PartialWithSwitch,
+                Compatibility.Presumed, Compatibility.Unknown, Compatibility.None,
+            })
+            {
+                StackPanel content = new StackPanel
+                {
+                    Children =
+                    {
+                        new TextBlock { Text = CompatibilityTexts.Name(level), TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center },
+                        new CompatibilityBar { Level = level, Height = 16, Margin = new Thickness(0, 10, 0, 0) },
+                    },
+                };
+                choices.Add(new MenuChoice(content, level == game.Compatibility, () => game.Compatibility = level));
+            }
+            ChoiceMenu.Show(Texts.Get("details.compatibility"), choices, () => SaveChange(() => { }));
+        }
+
+        private void ShowRatingMenu()
+        {
+            if (_game == null)
+            {
+                return;
+            }
+            Game game = _game;
+            List<MenuChoice> choices = new List<MenuChoice>();
+            foreach (int? rating in new int?[] { null, 1, 2, 3, 4, 5 })
+            {
+                choices.Add(new MenuChoice(rating?.ToString() ?? Texts.Get("details.rating.none"),
+                    rating == game.Rating, () => game.Rating = rating));
+            }
+            ChoiceMenu.Show(Texts.Get("details.rating"), choices, () => SaveChange(() => { }));
+        }
+
+        /// <summary>Changes one of my fields, saves it at once and redraws the page.</summary>
+        private void SaveChange(Action change)
+        {
+            if (_game == null)
+            {
+                return;
+            }
+            change();
+            SaveNotes();   // keeps the notes typed so far
+            App.Database.SaveUserFields(_game);
+            double offset = Scroll.Viewer.VerticalOffset;
+            BuildInfo(_game);
+            Scroll.Viewer.ScrollToVerticalOffset(offset);
+        }
+
+        /// <summary>"Name : value", in the interface language.</summary>
+        private static string Field(string nameKey, string value) => Texts.Format("details.field", Texts.Get(nameKey), value);
 
         /// <summary>A row of buttons, one per name; each opens the list of the games with that name.</summary>
         private void AddLinks(IEnumerable<string> names, Func<string, GameFilter> filter)

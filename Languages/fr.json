@@ -121,5 +121,7 @@
   "filter.compatibility.title": "Quelle compatibilité afficher ?",
   "filter.category.all": "Toutes les catégories",
   "filter.category.title": "Quelle catégorie afficher ?",
-  "filter.menu.cancel": "Annuler"
+  "filter.menu.cancel": "Annuler",
+  "details.mine": "Mes notes",
+  "details.field": "{0} : {1}"
 }

@@ -121,5 +121,7 @@
   "filter.compatibility.title": "Which compatibility to show?",
   "filter.category.all": "Every category",
   "filter.category.title": "Which category to show?",
-  "filter.menu.cancel": "Cancel"
+  "filter.menu.cancel": "Cancel",
+  "details.mine": "My notes",
+  "details.field": "{0}: {1}"
 }
