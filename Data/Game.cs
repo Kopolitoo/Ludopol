@@ -100,6 +100,15 @@ namespace Ludopol
         public string? ImageUrl { get; }
     }
 
+    /// <summary>The criteria a list of games can be sorted by.</summary>
+    public enum SortBy
+    {
+        Name,
+        Added,
+        Rating,
+        Compatibility,
+    }
+
     /// <summary>
     /// MODEL: which games a list shows. Every criterion left empty (null / false) keeps
     /// all the games.
@@ -118,8 +127,10 @@ namespace Ludopol
         /// <summary>Keeps the games with exactly this compatibility; null: all.</summary>
         public Compatibility? ExactCompatibility { get; set; }
         public int? MinRating { get; set; }
-        /// <summary>true: most recently added first; false: alphabetical order.</summary>
-        public bool NewestFirst { get; set; }
+        /// <summary>The order of the list (alphabetical by default).</summary>
+        public SortBy SortBy { get; set; } = SortBy.Name;
+        /// <summary>true: from Z to A, the newest, the best rated or the most compatible first.</summary>
+        public bool Descending { get; set; }
         /// <summary>Keeps the games whose name contains this text (case and accents ignored); null: all.</summary>
         public string? Search { get; set; }
     }

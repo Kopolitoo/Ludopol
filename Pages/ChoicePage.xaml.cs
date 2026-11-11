@@ -24,21 +24,51 @@ namespace Ludopol
     {
         private readonly ChoiceKind _kind;
 
+        /// <summary>Right of the title: the sort criterion (name / number of games) and the direction, two toggles.</summary>
+        private readonly StackPanel _sortButtons = new StackPanel { Orientation = Orientation.Horizontal };
+        private readonly TileButton _sortByButton = new TileButton();
+        private readonly TileButton _sortOrderButton = new TileButton();
+        private bool _byCount;
+        private bool _descending;
+        private int _count = -1;
+
         public ChoicePage(ChoiceKind kind)
         {
             InitializeComponent();
             _kind = kind;
             Items.ItemTemplate = (DataTemplate)Resources[kind == ChoiceKind.Categories ? "CardTemplate" : "TextTemplate"];
+
+            // Tags: the most used first; categories and developers: alphabetical.
+            _byCount = kind == ChoiceKind.Tags;
+            _descending = _byCount;
+            foreach (TileButton button in new[] { _sortByButton, _sortOrderButton })
+            {
+                button.SetResourceReference(WidthProperty, "SideButtonWidth");
+                button.SetResourceReference(FontSizeProperty, "SmallFontSize");
+                _sortButtons.Children.Add(button);
+            }
+            _sortByButton.Click += OnSortByClick;
+            _sortOrderButton.Click += OnSortOrderClick;
         }
 
-        public string Title => Texts.Get(_kind switch
+        /// <summary>The page's name and how many names it lists: "Tags (120)".</summary>
+        public string Title
         {
-            ChoiceKind.Tags => "home.tags",
-            ChoiceKind.Developers => "home.developers",
-            _ => "home.categories",
-        });
+            get
+            {
+                string title = Texts.Get(_kind switch
+                {
+                    ChoiceKind.Tags => "home.tags",
+                    ChoiceKind.Developers => "home.developers",
+                    _ => "home.categories",
+                });
+                return _count < 0 ? title : Texts.Format("list.titleCount", title, _count);
+            }
+        }
 
         public UIElement? SideContent => null;
+
+        public UIElement? TitleContent => _sortButtons;
 
         public void OnShown()
         {
@@ -48,7 +78,31 @@ namespace Ludopol
                 ChoiceKind.Developers => App.Database.GetDevelopers(),
                 _ => App.Database.GetCategories(),
             };
-            Items.ItemsSource = names.Select(n => new ChoiceItem(n, _kind == ChoiceKind.Categories)).ToList();
+            Items.ItemsSource = Database.SortNames(names, _byCount, _descending)
+                .Select(n => new ChoiceItem(n, _kind == ChoiceKind.Categories)).ToList();
+            _count = names.Count;
+            MainWindow.Current.RefreshTitle();
+
+            _sortByButton.Content = Texts.Format("sort.by", Texts.Get(_byCount ? "sort.count" : "sort.name"));
+            _sortOrderButton.Content = Texts.Get(_byCount
+                ? (_descending ? "sort.count.descending" : "sort.count.ascending")
+                : (_descending ? "sort.name.descending" : "sort.name.ascending"));
+        }
+
+        /// <summary>Only two criteria: the button switches from one to the other, in its natural direction.</summary>
+        private void OnSortByClick(object sender, RoutedEventArgs e)
+        {
+            _byCount = !_byCount;
+            _descending = _byCount;
+            OnShown();
+            Scroll.ScrollToTop();
+        }
+
+        private void OnSortOrderClick(object sender, RoutedEventArgs e)
+        {
+            _descending = !_descending;
+            OnShown();
+            Scroll.ScrollToTop();
         }
 
         public void OnLeaving() { }

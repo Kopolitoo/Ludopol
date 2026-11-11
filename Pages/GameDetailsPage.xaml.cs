@@ -353,7 +353,7 @@ namespace Ludopol
             if (game.Tags.Count > 0)
             {
                 AddTitle("details.tags");
-                AddLinks(game.Tags, name => new GameFilter { Tag = name });
+                AddLinks(game.Tags, name => new GameFilter { Tag = name }, small: true);
             }
             if (!string.IsNullOrWhiteSpace(game.Developer))
             {
@@ -509,7 +509,8 @@ namespace Ludopol
         private static string Field(string nameKey, string value) => Texts.Format("details.field", Texts.Get(nameKey), value);
 
         /// <summary>A row of buttons, one per name; each opens the list of the games with that name.</summary>
-        private void AddLinks(IEnumerable<string> names, Func<string, GameFilter> filter)
+        /// <param name="small">Half-size buttons (the tags, which are many).</param>
+        private void AddLinks(IEnumerable<string> names, Func<string, GameFilter> filter, bool small = false)
         {
             WrapPanel row = new WrapPanel();
             foreach (string name in names)
@@ -517,6 +518,12 @@ namespace Ludopol
                 TileButton button = new TileButton { Content = name };
                 button.SetResourceReference(MaxWidthProperty, "WideButtonWidth");
                 button.SetResourceReference(FontSizeProperty, "SmallFontSize");
+                if (small)
+                {
+                    button.SetResourceReference(MinWidthProperty, "SmallButtonSize");
+                    button.SetResourceReference(MinHeightProperty, "SmallButtonSize");
+                    button.Padding = new Thickness(8, 4, 8, 4);
+                }
                 button.Click += (s, e) => MainWindow.Current.Navigate(new GameListPage(filter(name), name));
                 row.Children.Add(button);
             }

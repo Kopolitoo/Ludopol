@@ -82,6 +82,19 @@ avec « Possédés sur Steam », on voit les jeux achetés mais pas installés.
 Accueil → « Rechercher un jeu » : un champ en haut (clavier de Prunel ou Dragon) ; la liste se
 réduit à chaque lettre, sans tenir compte des majuscules ni des accents.
 
+## Listes et navigation
+
+Le titre d'une liste donne son nombre de jeux, par exemple « Tous les jeux (316) ». À droite du
+titre, « Tri : … » ouvre le choix du critère (nom, date d'ajout, note, compatibilité) et le
+bouton voisin inverse le sens (A → Z / Z → A, plus récents d'abord…). Les jeux sans note
+restent à la fin. Les pages Catégories, Tags et Développeurs ont aussi leur nombre et leur tri
+(par nom ou par nombre de jeux ; les tags commencent par les plus utilisés).
+
+Partout où le contenu défile, une fine jauge à droite montre où l'on est dans la page, et le
+clavier fonctionne : Page suivante / Espace, Page précédente, Début, Fin, flèches haut et bas.
+La touche Retour arrière fait comme le bouton « Retour ». Pendant la saisie dans un champ (la
+recherche), seules Page suivante et Page précédente font défiler : les autres touches servent au texte.
+
 ## Fiche d'un jeu
 
 Les catégories, les tags Steam et le développeur sont des boutons : chacun ouvre la liste des

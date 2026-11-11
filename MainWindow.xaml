@@ -48,9 +48,17 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
-                <TextBlock x:Name="TitleText" Margin="12,6,12,0"
-                           FontSize="{DynamicResource TitleFontSize}" FontWeight="SemiBold"
-                           TextWrapping="Wrap" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="TitleText" Margin="12,6,12,0" VerticalAlignment="Center"
+                               FontSize="{DynamicResource TitleFontSize}" FontWeight="SemiBold"
+                               TextWrapping="Wrap" />
+                    <!-- The page's own buttons beside its title (the sort of a list). -->
+                    <ContentControl x:Name="TitleExtras" Grid.Column="1" Focusable="False" />
+                </Grid>
                 <ContentControl x:Name="PageHost" Grid.Row="1" Focusable="False" />
             </Grid>
         </Grid>

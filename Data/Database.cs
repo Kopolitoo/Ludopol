@@ -430,10 +430,43 @@ namespace Ludopol
                 games = games.Where(g => Simplify(g.Name).Contains(wanted)).ToList();
             }
 
-            return filter.NewestFirst
-                ? games.OrderByDescending(g => g.AddedAt).ThenBy(g => g.Name, NameOrder).ToList()
-                : games.OrderBy(g => g.Name, NameOrder).ToList();
+            return Sort(games, filter.SortBy, filter.Descending);
         }
+
+        /// <summary>
+        /// Sorts a list. Games with the same value keep the alphabetical order; a game without
+        /// a rating comes after the rated ones in both directions.
+        /// </summary>
+        public static List<Game> Sort(List<Game> games, SortBy sortBy, bool descending)
+        {
+            if (sortBy == SortBy.Name)
+            {
+                return (descending ? games.OrderByDescending(g => g.Name, NameOrder) : games.OrderBy(g => g.Name, NameOrder)).ToList();
+            }
+            if (sortBy == SortBy.Rating)
+            {
+                IOrderedEnumerable<Game> rated = games.OrderBy(g => g.Rating.HasValue ? 0 : 1);
+                rated = descending ? rated.ThenByDescending(g => g.Rating ?? 0) : rated.ThenBy(g => g.Rating ?? 0);
+                return rated.ThenBy(g => g.Name, NameOrder).ToList();
+            }
+            Func<Game, long> key = sortBy == SortBy.Added
+                ? (Func<Game, long>)(g => g.AddedAt.Ticks)
+                : g => CompatibilityRank(g.Compatibility);
+            IOrderedEnumerable<Game> sorted = descending ? games.OrderByDescending(key) : games.OrderBy(key);
+            return sorted.ThenBy(g => g.Name, NameOrder).ToList();
+        }
+
+        /// <summary>The compatibility levels from the worst to the best (the enum's numbers are not in that order).</summary>
+        private static int CompatibilityRank(Compatibility level) => level switch
+        {
+            Compatibility.None => 0,
+            Compatibility.Unknown => 1,
+            Compatibility.Presumed => 2,
+            Compatibility.PartialWithSwitch => 3,
+            Compatibility.PartialGaze => 4,
+            Compatibility.Full => 5,
+            _ => 1,
+        };
 
         /// <summary>One game with its categories and tags, or null if it no longer exists.</summary>
         public Game? GetGame(long id)
@@ -476,6 +509,17 @@ namespace Ludopol
                         LIMIT 1)
                 FROM game_categories c GROUP BY c.name")
                 .OrderBy(c => c.Name, NameOrder).ToList();
+
+        /// <summary>Sorts names by name, or by number of games (then by name).</summary>
+        public static List<NamedCount> SortNames(List<NamedCount> names, bool byCount, bool descending)
+        {
+            if (!byCount)
+            {
+                return (descending ? names.OrderByDescending(n => n.Name, NameOrder) : names.OrderBy(n => n.Name, NameOrder)).ToList();
+            }
+            IOrderedEnumerable<NamedCount> sorted = descending ? names.OrderByDescending(n => n.Count) : names.OrderBy(n => n.Count);
+            return sorted.ThenBy(n => n.Name, NameOrder).ToList();
+        }
 
         /// <summary>The Steam tags, the most used first.</summary>
         public List<NamedCount> GetTags() =>

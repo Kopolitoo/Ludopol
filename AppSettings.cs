@@ -150,6 +150,8 @@ namespace Ludopol
             resources["TileSlotWidth"] = TileWidth + Spacing;
             resources["ButtonMinSize"] = ButtonMinSize;
             resources["WideButtonWidth"] = ButtonMinSize * 2;
+            // Half-size buttons: the tags of a game's page.
+            resources["SmallButtonSize"] = Math.Round(ButtonMinSize / 2);
             resources["SideButtonWidth"] = Math.Round(ButtonMinSize * 1.4);
             // The left navigation column: one side button and its margins, as wide as the filter column.
             resources["SideColumnWidth"] = Math.Round(ButtonMinSize * 1.4) + Spacing;
