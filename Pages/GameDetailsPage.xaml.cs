@@ -395,6 +395,13 @@ namespace Ludopol
                 MinHeight = (double)FindResource("ButtonMinSize") * 1.5,
             };
             Info.Children.Add(_notesBox);
+
+            // Trial: the same notes in a real Windows field, for Dragon's direct dictation.
+            TileButton dictate = MenuButton(Texts.Get("details.dictateNotes"),
+                () => MainWindow.Current.Navigate(new NotesPage(game.Id)));
+            dictate.HorizontalAlignment = HorizontalAlignment.Left;
+            dictate.Margin = new Thickness(0, 12, 0, 0);
+            Info.Children.Add(dictate);
         }
 
         /// <summary>A yes/no field: one button, blue when yes; each activation switches it.</summary>

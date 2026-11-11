@@ -108,6 +108,14 @@ Un jeu Steam pas installé propose « Installer avec Steam » s'il est possédé
 sur Steam a « Voir le jeu sur le magasin Steam » (page dans Steam, ou dans le navigateur sans
 Steam). « Choisir le programme du jeu… » n'est proposé que pour un jeu non possédé sur Steam.
 
+### Essai : dictée directe avec Dragon
+
+Sous « Mes remarques », « Dicter mes remarques (Dragon) » ouvre les mêmes remarques dans une
+vraie zone de texte Windows (contrôle Windows Forms), sur toute la page. Dragon ne reconnaît pas
+les champs de WPF ; cette zone est du même type que celle du Bloc-notes et devrait permettre la
+dictée directe (« Full-Text Control »). « Retour » enregistre. C'est un essai : selon le résultat,
+la zone Windows remplacera le champ actuel, ou il faudra une autre piste.
+
 ## Compiler et lancer
 
 1. Ouvrir `Ludopol.slnx` (ou `Ludopol.csproj`) dans Visual Studio 2022, avec la charge de travail

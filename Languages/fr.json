@@ -160,5 +160,7 @@
   "sort.compatibility.descending": "Plus compatibles d'abord",
   "sort.count": "Nombre de jeux",
   "sort.count.ascending": "Moins de jeux d'abord",
-  "sort.count.descending": "Plus de jeux d'abord"
+  "sort.count.descending": "Plus de jeux d'abord",
+  "details.dictateNotes": "Dicter mes remarques (Dragon)",
+  "notes.title": "Mes remarques : {0}"
 }
