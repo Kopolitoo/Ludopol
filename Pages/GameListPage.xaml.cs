@@ -7,16 +7,23 @@ namespace Ludopol
     /// <summary>
     /// VIEW: a list of games (a category, a tag, a developer, recently added, or all).
     ///
-    /// The filter buttons have no menu: each look on a button moves to its next value,
-    /// in a loop. For example "Rating: all" → "3 or more" → "4 or more" → "5" → "all".
-    /// A filter in use is shown in blue.
+    /// The filter buttons are in a column on the left of the screen. They have no menu: each
+    /// activation moves a button to its next value, in a loop. For example
+    /// "Any rating" → "3 or more" → "4 or more" → "5" → "Any rating". A filter in use is blue.
     /// </summary>
     public partial class GameListPage : UserControl, IPage
     {
         private static readonly Compatibility?[] CompatibilitySteps =
             { null, Compatibility.PartialWithSwitch, Compatibility.PartialGaze, Compatibility.Full };
         private static readonly int?[] RatingSteps = { null, 3, 4, 5 };
-        private static readonly bool?[] TriedSteps = { null, true, false };
+        private static readonly bool?[] YesNoSteps = { null, true, false };
+
+        private readonly StackPanel _filters = new StackPanel();
+        private readonly TileButton _installedFilter = new TileButton();
+        private readonly TileButton _ownedFilter = new TileButton();
+        private readonly TileButton _triedFilter = new TileButton();
+        private readonly TileButton _compatibilityFilter = new TileButton();
+        private readonly TileButton _ratingFilter = new TileButton();
 
         private readonly GameFilter _filter;
         private readonly string _title;
@@ -26,9 +33,23 @@ namespace Ludopol
             InitializeComponent();
             _filter = filter;
             _title = title;
+
+            foreach (TileButton button in new[] { _installedFilter, _ownedFilter, _triedFilter, _compatibilityFilter, _ratingFilter })
+            {
+                button.SetResourceReference(WidthProperty, "SideButtonWidth");
+                button.SetResourceReference(FontSizeProperty, "SmallFontSize");
+                _filters.Children.Add(button);
+            }
+            _installedFilter.Click += OnInstalledFilterClick;
+            _ownedFilter.Click += OnOwnedFilterClick;
+            _triedFilter.Click += OnTriedFilterClick;
+            _compatibilityFilter.Click += OnCompatibilityFilterClick;
+            _ratingFilter.Click += OnRatingFilterClick;
         }
 
         public string Title => _title;
+
+        public UIElement? SideContent => _filters;
 
         /// <summary>Reads the games again: a change made on a game's page shows when coming back.</summary>
         public void OnShown()
@@ -57,9 +78,15 @@ namespace Ludopol
             ApplyFilter();
         }
 
+        private void OnOwnedFilterClick(object sender, RoutedEventArgs e)
+        {
+            _filter.OwnedOnSteam = Next(YesNoSteps, _filter.OwnedOnSteam);
+            ApplyFilter();
+        }
+
         private void OnTriedFilterClick(object sender, RoutedEventArgs e)
         {
-            _filter.Tried = Next(TriedSteps, _filter.Tried);
+            _filter.Tried = Next(YesNoSteps, _filter.Tried);
             ApplyFilter();
         }
 
@@ -83,26 +110,34 @@ namespace Ludopol
 
         private void UpdateFilterButtons()
         {
-            InstalledFilter.Content = Texts.Get(_filter.InstalledOnly ? "filter.installed.only" : "filter.installed.all");
-            InstalledFilter.IsSelected = _filter.InstalledOnly;
+            _installedFilter.Content = Texts.Get(_filter.InstalledOnly ? "filter.installed.only" : "filter.installed.all");
+            _installedFilter.IsSelected = _filter.InstalledOnly;
 
-            TriedFilter.Content = Texts.Get(_filter.Tried switch
+            _ownedFilter.Content = Texts.Get(_filter.OwnedOnSteam switch
+            {
+                true => "filter.owned.yes",
+                false => "filter.owned.no",
+                null => "filter.owned.all",
+            });
+            _ownedFilter.IsSelected = _filter.OwnedOnSteam.HasValue;
+
+            _triedFilter.Content = Texts.Get(_filter.Tried switch
             {
                 true => "filter.tried.yes",
                 false => "filter.tried.no",
                 null => "filter.tried.all",
             });
-            TriedFilter.IsSelected = _filter.Tried.HasValue;
+            _triedFilter.IsSelected = _filter.Tried.HasValue;
 
-            CompatibilityFilter.Content = _filter.MinCompatibility is Compatibility minimum
+            _compatibilityFilter.Content = _filter.MinCompatibility is Compatibility minimum
                 ? Texts.Format("filter.compatibility.atLeast", CompatibilityTexts.Name(minimum))
                 : Texts.Get("filter.compatibility.all");
-            CompatibilityFilter.IsSelected = _filter.MinCompatibility.HasValue;
+            _compatibilityFilter.IsSelected = _filter.MinCompatibility.HasValue;
 
-            RatingFilter.Content = _filter.MinRating is int rating
+            _ratingFilter.Content = _filter.MinRating is int rating
                 ? Texts.Format(rating == 5 ? "filter.rating.five" : "filter.rating.atLeast", rating)
                 : Texts.Get("filter.rating.all");
-            RatingFilter.IsSelected = _filter.MinRating.HasValue;
+            _ratingFilter.IsSelected = _filter.MinRating.HasValue;
         }
 
         /// <summary>The value after the current one in a list of steps, back to the first after the last.</summary>

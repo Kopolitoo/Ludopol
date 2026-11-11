@@ -15,6 +15,14 @@ namespace Ludopol
     /// </summary>
     internal sealed class AppSettings
     {
+        /// <summary>
+        /// Version of the settings file. When a default value changes in a new version of Ludopol,
+        /// Load() updates an older file (see Upgrade).
+        /// </summary>
+        public int SettingsVersion { get; set; } = CurrentVersion;
+
+        private const int CurrentVersion = 2;
+
         /// <summary>Interface language: the name of a file of the Languages folder ("fr", "en").</summary>
         public string Language { get; set; } = "fr";
 
@@ -37,7 +45,7 @@ namespace Ludopol
         /// Prunel's movement mode) has stayed on it for HoverDelayMs milliseconds. A click
         /// always works too.
         /// </summary>
-        public bool HoverActivation { get; set; } = false;
+        public bool HoverActivation { get; set; } = true;
         public int HoverDelayMs { get; set; } = 1000;
 
         /// <summary>The settings in use.</summary>
@@ -62,13 +70,41 @@ namespace Ludopol
             }
             try
             {
-                Current = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(FilePath)) ?? new AppSettings();
+                string json = File.ReadAllText(FilePath);
+                Current = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
+                using (JsonDocument document = JsonDocument.Parse(json))
+                {
+                    // A file written before SettingsVersion existed is version 1.
+                    if (!document.RootElement.TryGetProperty(nameof(SettingsVersion), out _))
+                    {
+                        Current.SettingsVersion = 1;
+                    }
+                }
+                Current.Upgrade();
             }
             catch (Exception ex)
             {
                 App.Log("Settings: unreadable file, default values used: " + ex.Message);
                 Current = new AppSettings();
             }
+        }
+
+        /// <summary>Brings a file of an older version up to date, and saves it.</summary>
+        private void Upgrade()
+        {
+            if (SettingsVersion >= CurrentVersion)
+            {
+                return;
+            }
+            if (SettingsVersion < 2)
+            {
+                // Version 2: hover activation on by default, after one second.
+                HoverActivation = true;
+                HoverDelayMs = 1000;
+            }
+            App.Log("Settings: file upgraded from version " + SettingsVersion + " to " + CurrentVersion);
+            SettingsVersion = CurrentVersion;
+            Save();
         }
 
         /// <summary>Writes settings.json.</summary>
@@ -94,6 +130,8 @@ namespace Ludopol
             resources["TileHeight"] = TileHeight;
             resources["ButtonMinSize"] = ButtonMinSize;
             resources["WideButtonWidth"] = ButtonMinSize * 2;
+            resources["SideButtonWidth"] = Math.Round(ButtonMinSize * 1.4);
+            resources["TileImageHeight"] = Math.Round(TileHeight * 0.6);
             resources["BaseFontSize"] = FontSize;
             resources["SmallFontSize"] = Math.Round(FontSize * 0.75);
             resources["TitleFontSize"] = TitleFontSize;

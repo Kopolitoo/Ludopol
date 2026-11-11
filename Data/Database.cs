@@ -24,7 +24,7 @@ namespace Ludopol
         /// Version of the table layout. When it changes in a later step, Open() will update
         /// an older file instead of losing the catalogue.
         /// </summary>
-        private const int SchemaVersion = 1;
+        private const int SchemaVersion = 2;
 
         private readonly string _connectionString;
 
@@ -46,7 +46,7 @@ namespace Ludopol
             using (SqliteConnection connection = Connect())
             {
                 long version = (long)(Scalar(connection, "PRAGMA user_version") ?? 0L);
-                if (version < SchemaVersion)
+                if (version < 1)
                 {
                     Execute(connection, @"
                         CREATE TABLE IF NOT EXISTS games (
@@ -80,8 +80,16 @@ namespace Ludopol
                             position  INTEGER NOT NULL,
                             PRIMARY KEY (game_id, name)
                         );
-                        PRAGMA user_version = " + SchemaVersion + ";");
-                    App.Log("Database: tables created (version " + SchemaVersion + ")");
+                        PRAGMA user_version = 1;");
+                    App.Log("Database: tables created (version 1)");
+                }
+                if (version < 2)
+                {
+                    // Version 2: "owned on Steam".
+                    Execute(connection, @"
+                        ALTER TABLE games ADD COLUMN owned_on_steam INTEGER NOT NULL DEFAULT 0;
+                        PRAGMA user_version = 2;");
+                    App.Log("Database: updated to version 2");
                 }
 
                 long count = (long)(Scalar(connection, "SELECT COUNT(*) FROM games") ?? 0L);
@@ -106,10 +114,10 @@ namespace Ludopol
                 command.Transaction = transaction;
                 command.CommandText = @"
                     INSERT INTO games (name, steam_app_id, image_url, description, release_date, developer,
-                                       genres, price, french, tried, compatibility, rating, notes, to_publish,
+                                       genres, price, french, owned_on_steam, tried, compatibility, rating, notes, to_publish,
                                        installed, launch_target, added_at)
                     VALUES ($name, $steam, $image, $description, $release, $developer,
-                            $genres, $price, $french, $tried, $compatibility, $rating, $notes, $publish,
+                            $genres, $price, $french, $owned, $tried, $compatibility, $rating, $notes, $publish,
                             $installed, $launch, $added)";
                 command.Parameters.AddWithValue("$name", game.Name);
                 command.Parameters.AddWithValue("$steam", (object?)game.SteamAppId ?? DBNull.Value);
@@ -120,6 +128,7 @@ namespace Ludopol
                 command.Parameters.AddWithValue("$genres", (object?)game.Genres ?? DBNull.Value);
                 command.Parameters.AddWithValue("$price", (object?)game.Price ?? DBNull.Value);
                 command.Parameters.AddWithValue("$french", game.French.HasValue ? (object)(game.French.Value ? 1 : 0) : DBNull.Value);
+                command.Parameters.AddWithValue("$owned", game.OwnedOnSteam ? 1 : 0);
                 command.Parameters.AddWithValue("$tried", game.Tried ? 1 : 0);
                 command.Parameters.AddWithValue("$compatibility", (int)game.Compatibility);
                 command.Parameters.AddWithValue("$rating", (object?)game.Rating ?? DBNull.Value);
@@ -159,16 +168,17 @@ namespace Ludopol
             }
         }
 
-        /// <summary>Saves what I change on a game's page: tried, compatibility, rating, notes, to publish.</summary>
+        /// <summary>Saves what I change on a game's page: owned on Steam, tried, compatibility, rating, notes, to publish.</summary>
         public void SaveUserFields(Game game)
         {
             using (SqliteConnection connection = Connect())
             {
                 SqliteCommand command = connection.CreateCommand();
                 command.CommandText = @"
-                    UPDATE games SET tried = $tried, compatibility = $compatibility, rating = $rating,
+                    UPDATE games SET owned_on_steam = $owned, tried = $tried, compatibility = $compatibility, rating = $rating,
                                      notes = $notes, to_publish = $publish
                     WHERE id = $id";
+                command.Parameters.AddWithValue("$owned", game.OwnedOnSteam ? 1 : 0);
                 command.Parameters.AddWithValue("$tried", game.Tried ? 1 : 0);
                 command.Parameters.AddWithValue("$compatibility", (int)game.Compatibility);
                 command.Parameters.AddWithValue("$rating", (object?)game.Rating ?? DBNull.Value);
@@ -210,6 +220,11 @@ namespace Ludopol
                 {
                     sql.Append(" AND g.tried = $tried");
                     command.Parameters.AddWithValue("$tried", filter.Tried.Value ? 1 : 0);
+                }
+                if (filter.OwnedOnSteam.HasValue)
+                {
+                    sql.Append(" AND g.owned_on_steam = $owned");
+                    command.Parameters.AddWithValue("$owned", filter.OwnedOnSteam.Value ? 1 : 0);
                 }
                 if (filter.MinCompatibility.HasValue)
                 {
@@ -263,9 +278,20 @@ namespace Ludopol
             }
         }
 
-        /// <summary>The categories, with their number of games, in alphabetical order.</summary>
+        /// <summary>
+        /// The categories, with their number of games, in alphabetical order. Each one comes
+        /// with the image of one of its games for its card: the best rated, then the most
+        /// recently added.
+        /// </summary>
         public List<NamedCount> GetCategories() =>
-            ReadCounts("SELECT name, COUNT(*) FROM game_categories GROUP BY name")
+            ReadCounts(@"
+                SELECT c.name, COUNT(*),
+                       (SELECT g.image_url FROM games g
+                        JOIN game_categories c2 ON c2.game_id = g.id
+                        WHERE c2.name = c.name AND g.image_url IS NOT NULL AND g.image_url <> ''
+                        ORDER BY g.rating IS NULL, g.rating DESC, g.added_at DESC
+                        LIMIT 1)
+                FROM game_categories c GROUP BY c.name")
                 .OrderBy(c => c.Name, NameOrder).ToList();
 
         /// <summary>The Steam tags, the most used first.</summary>
@@ -312,7 +338,9 @@ namespace Ludopol
                 {
                     while (reader.Read())
                     {
-                        result.Add(new NamedCount(reader.GetString(0), reader.GetInt32(1)));
+                        // A third column, when there is one, is an image address.
+                        string? image = reader.FieldCount > 2 && !reader.IsDBNull(2) ? reader.GetString(2) : null;
+                        result.Add(new NamedCount(reader.GetString(0), reader.GetInt32(1), image));
                     }
                 }
             }
@@ -350,6 +378,7 @@ namespace Ludopol
                 Genres = NullableString(r, "genres"),
                 Price = NullableString(r, "price"),
                 French = NullableLong(r, "french") is long french ? french == 1 : (bool?)null,
+                OwnedOnSteam = r.GetInt64(r.GetOrdinal("owned_on_steam")) == 1,
                 Tried = r.GetInt64(r.GetOrdinal("tried")) == 1,
                 Compatibility = (Compatibility)r.GetInt32(r.GetOrdinal("compatibility")),
                 Rating = (int?)NullableLong(r, "rating"),

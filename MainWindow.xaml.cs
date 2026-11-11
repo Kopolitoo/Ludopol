@@ -12,6 +12,9 @@ namespace Ludopol
     {
         string Title { get; }
 
+        /// <summary>The page's own buttons, shown in a column on the left (null: none).</summary>
+        UIElement? SideContent { get; }
+
         /// <summary>Called each time the page is shown, including when coming back to it.</summary>
         void OnShown();
 
@@ -66,12 +69,31 @@ namespace Ludopol
         {
             _current = page;
             PageHost.Content = page;
-            TitleText.Text = (page as IPage)?.Title ?? "";
-            BackButton.Visibility = _history.Count > 0 ? Visibility.Visible : Visibility.Hidden;
+            bool atHome = _history.Count == 0;
+            BackButton.Visibility = atHome ? Visibility.Hidden : Visibility.Visible;
+            HomeButton.Visibility = atHome ? Visibility.Hidden : Visibility.Visible;
             (page as IPage)?.OnShown();
+            // Read after OnShown: a game's page knows its title once the game is read.
+            TitleText.Text = (page as IPage)?.Title ?? "";
+            SideHost.Content = (page as IPage)?.SideContent;
+        }
+
+        /// <summary>Goes straight back to the home page (the first page of the history).</summary>
+        public void GoHome()
+        {
+            if (_history.Count == 0)
+            {
+                return;
+            }
+            (_current as IPage)?.OnLeaving();
+            UserControl home = _history.ToArray()[_history.Count - 1];
+            _history.Clear();
+            ShowPage(home);
         }
 
         private void OnBackClick(object sender, RoutedEventArgs e) => GoBack();
+
+        private void OnHomeClick(object sender, RoutedEventArgs e) => GoHome();
 
         private void OnQuitClick(object sender, RoutedEventArgs e) => QuitPanel.Visibility = Visibility.Visible;
 

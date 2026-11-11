@@ -2,7 +2,43 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Ludopol">
-    <!-- A grid of names (categories, tags or developers) with their number of games. -->
+    <!--
+      A grid of names with their number of games: categories as picture cards,
+      tags and developers as text tiles. Names wrap on several lines: never cut.
+    -->
+    <UserControl.Resources>
+        <!-- Category card: a picture, then the name and the number of games. -->
+        <DataTemplate x:Key="CardTemplate">
+            <local:TileButton Width="{DynamicResource TileWidth}" Padding="10" Click="OnItemClick"
+                              HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top">
+                <StackPanel>
+                    <Grid Height="{DynamicResource TileImageHeight}" ClipToBounds="True">
+                        <!-- Coloured background with the initials, hidden by the picture when there is one. -->
+                        <Border Background="{Binding PlaceholderBrush}" CornerRadius="8">
+                            <TextBlock Text="{Binding Initials}" FontSize="{DynamicResource TitleFontSize}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <Image Source="{Binding ImageSource, TargetNullValue={x:Null}}" Stretch="UniformToFill" />
+                    </Grid>
+                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Margin="0,10,0,0" />
+                    <TextBlock Text="{Binding CountText}" Foreground="{StaticResource MutedTextBrush}"
+                               FontSize="{DynamicResource SmallFontSize}" Margin="0,4,0,0" />
+                </StackPanel>
+            </local:TileButton>
+        </DataTemplate>
+
+        <!-- Tag or developer: text only. -->
+        <DataTemplate x:Key="TextTemplate">
+            <local:TileButton Width="{DynamicResource TileWidth}" Click="OnItemClick">
+                <StackPanel>
+                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding CountText}" Foreground="{StaticResource MutedTextBrush}"
+                               FontSize="{DynamicResource SmallFontSize}" Margin="0,6,0,0" />
+                </StackPanel>
+            </local:TileButton>
+        </DataTemplate>
+    </UserControl.Resources>
+
     <local:ScrollPanel x:Name="Scroll">
         <ItemsControl x:Name="Items">
             <ItemsControl.ItemsPanel>
@@ -10,17 +46,6 @@
                     <WrapPanel />
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <local:TileButton Width="{DynamicResource TileWidth}" Click="OnItemClick">
-                        <StackPanel>
-                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
-                            <TextBlock Text="{Binding CountText}" Foreground="{StaticResource MutedTextBrush}"
-                                       FontSize="{DynamicResource SmallFontSize}" Margin="0,6,0,0" />
-                        </StackPanel>
-                    </local:TileButton>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
         </ItemsControl>
     </local:ScrollPanel>
 </UserControl>

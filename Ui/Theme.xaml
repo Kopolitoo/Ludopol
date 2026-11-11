@@ -26,6 +26,8 @@
     <system:Double x:Key="TileHeight">300</system:Double>
     <system:Double x:Key="ButtonMinSize">150</system:Double>
     <system:Double x:Key="WideButtonWidth">300</system:Double>
+    <system:Double x:Key="SideButtonWidth">210</system:Double>
+    <system:Double x:Key="TileImageHeight">180</system:Double>
     <system:Double x:Key="BaseFontSize">28</system:Double>
     <system:Double x:Key="SmallFontSize">21</system:Double>
     <system:Double x:Key="TitleFontSize">40</system:Double>
@@ -35,6 +37,7 @@
       The big button (Ui/TileButton.cs). Under the cursor: thick yellow frame.
       Selected (IsSelected, for example the current rating): blue background.
       Disabled: faded.
+      With hover activation: a yellow gauge fills at the bottom while the cursor stays on it.
     -->
     <Style TargetType="{x:Type local:TileButton}">
         <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
@@ -55,18 +58,27 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="6"
-                            CornerRadius="14"
-                            Padding="{TemplateBinding Padding}">
-                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
-                            <ContentPresenter.Resources>
-                                <!-- A text label wraps on several lines, centred. -->
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="TextWrapping" Value="Wrap" />
-                                    <Setter Property="TextAlignment" Value="Center" />
-                                </Style>
-                            </ContentPresenter.Resources>
-                        </ContentPresenter>
+                            CornerRadius="14">
+                        <Grid>
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
+                                <ContentPresenter.Resources>
+                                    <!-- A text label wraps on several lines, centred: never cut. -->
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="TextWrapping" Value="Wrap" />
+                                        <Setter Property="TextAlignment" Value="Center" />
+                                    </Style>
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
+                            <!-- Hover activation gauge: fills from left to right during the delay. -->
+                            <Rectangle Height="10" VerticalAlignment="Bottom" Fill="{StaticResource HoverBrush}"
+                                       RenderTransformOrigin="0,0.5">
+                                <Rectangle.RenderTransform>
+                                    <ScaleTransform ScaleX="{Binding HoverProgress, RelativeSource={RelativeSource TemplatedParent}}" />
+                                </Rectangle.RenderTransform>
+                            </Rectangle>
+                        </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="Tag" Value="selected">

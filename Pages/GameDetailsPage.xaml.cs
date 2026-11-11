@@ -10,7 +10,7 @@ namespace Ludopol
     /// VIEW: the page of one game.
     ///
     /// The right part is built in code (BuildInfo), section by section. Each choice
-    /// (compatibility, tried, rating, to publish) is a row of big buttons; the chosen one is
+    /// (compatibility, owned on Steam, tried, rating, to publish) is a row of big buttons; the chosen one is
     /// blue. A choice is saved in the database at once. "My notes" is an ordinary text field
     /// (Prunel's keyboard, Dragon): it is saved when the page is left.
     /// </summary>
@@ -27,6 +27,8 @@ namespace Ludopol
         }
 
         public string Title => _game?.Name ?? "";
+
+        public UIElement? SideContent => null;
 
         public void OnShown()
         {
@@ -101,6 +103,9 @@ namespace Ludopol
                 Compatibility.Unknown, Compatibility.None, Compatibility.PartialWithSwitch,
                 Compatibility.PartialGaze, Compatibility.Full,
             }, CompatibilityTexts.Name, game.Compatibility, value => game.Compatibility = value);
+
+            AddTitle("details.ownedOnSteam");
+            AddChoices(new[] { true, false }, YesNo, game.OwnedOnSteam, value => game.OwnedOnSteam = value);
 
             AddTitle("details.tried");
             AddChoices(new[] { true, false }, YesNo, game.Tried, value => game.Tried = value);

@@ -22,6 +22,7 @@ namespace Ludopol
                 Genres = "Aventure, Indépendant",
                 Price = "9,99€",
                 French = true,
+                OwnedOnSteam = true,
                 Categories = new List<string> { "Romans visuels / Narratif" },
                 Tags = new List<string> { "Visual Novel", "Story Rich", "Relaxing", "Singleplayer" },
                 Tried = true,

@@ -30,6 +30,7 @@ Dans `%LocalAppData%\Ludopol` :
 | `settings.json` | Réglages : langue, tailles des boutons et du texte, activation au survol. À modifier Ludopol fermé. |
 | `ludopol.db` | Le catalogue (base SQLite). Le supprimer remet les deux jeux fictifs. |
 | `ludopol.log` | Ce qui s'est passé, pour chercher une erreur. |
+| `Categories\` | Facultatif : mes propres images de catégories, nommées comme la catégorie (`.png`, `.jpg`). Les caractères interdits dans un nom de fichier deviennent `_` : `Romans visuels _ Narratif.png`. Sans image, la carte prend celle d'un jeu de la catégorie. |
 
 ## Réglages utiles (`settings.json`)
 
@@ -40,7 +41,7 @@ Dans `%LocalAppData%\Ludopol` :
 | `ButtonMinSize` | 150 | Taille minimale de tout bouton. |
 | `Spacing` | 24 | Écart entre deux boutons. |
 | `FontSize`, `TitleFontSize` | 28, 40 | Taille du texte et des titres. |
-| `HoverActivation` | `false` | `true` : un bouton s'active seul quand le curseur reste dessus (mode mouvement de Prunel). |
+| `HoverActivation` | `true` | Un bouton s'active seul quand le curseur reste dessus (mode mouvement de Prunel) ; une jauge jaune se remplit pendant le délai. `false` : clic seulement. |
 | `HoverDelayMs` | 1000 | Délai de l'activation au survol, en millisecondes. |
 
 Les tailles sont en unités WPF (1/96 de pouce) : avec une mise à l'échelle Windows de 200 %,

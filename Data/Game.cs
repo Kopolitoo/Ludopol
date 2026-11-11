@@ -38,6 +38,8 @@ namespace Ludopol
         public string? Price { get; set; }
         /// <summary>French available: true, false, or null if unknown.</summary>
         public bool? French { get; set; }
+        /// <summary>The game is in my Steam library (for the Steam synchronisation, later).</summary>
+        public bool OwnedOnSteam { get; set; }
 
         // --- My own data ---
         public List<string> Categories { get; set; } = new List<string>();
@@ -73,17 +75,22 @@ namespace Ludopol
         }
     }
 
-    /// <summary>A name with its number of games, for the Categories, Tags and Developers pages.</summary>
+    /// <summary>
+    /// A name with its number of games, for the Categories, Tags and Developers pages,
+    /// and the image of one of its games (for the category cards).
+    /// </summary>
     public sealed class NamedCount
     {
-        public NamedCount(string name, int count)
+        public NamedCount(string name, int count, string? imageUrl = null)
         {
             Name = name;
             Count = count;
+            ImageUrl = imageUrl;
         }
 
         public string Name { get; }
         public int Count { get; }
+        public string? ImageUrl { get; }
     }
 
     /// <summary>
@@ -98,6 +105,8 @@ namespace Ludopol
         public bool InstalledOnly { get; set; }
         /// <summary>true: tried games only; false: not tried yet; null: all.</summary>
         public bool? Tried { get; set; }
+        /// <summary>true: owned on Steam only; false: not owned; null: all.</summary>
+        public bool? OwnedOnSteam { get; set; }
         /// <summary>Keeps the games at least this compatible (Unknown is then excluded).</summary>
         public Compatibility? MinCompatibility { get; set; }
         public int? MinRating { get; set; }

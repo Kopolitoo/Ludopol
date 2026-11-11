@@ -11,30 +11,46 @@
         FontFamily="Segoe UI"
         FontSize="{DynamicResource BaseFontSize}">
     <!--
-      The only window, full screen. At the top: "Back" (always top left), the page title,
-      "Quit" (top right). Below: the current page (PageHost).
+      The only window, full screen, laid out in columns so that the content gets the whole
+      height of the screen:
+        - left: navigation, one button under the other ("Back", "Home"… "Quit" at the bottom);
+        - next to it: the page's own buttons when it has some (the filters of a list: SideHost);
+        - middle: the page title on one line, then the page (PageHost). A page that scrolls
+          has its "Up" / "Down" buttons on the right edge (Ui/ScrollPanel.cs).
       QuitPanel covers everything when "Quit" is chosen, to confirm.
     -->
     <Grid>
-        <Grid Margin="12">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
+        <Grid Margin="6">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <local:TileButton x:Name="BackButton" Content="{local:Tr common.back}"
-                              Width="{DynamicResource WideButtonWidth}" Click="OnBackClick" />
-            <TextBlock x:Name="TitleText" Grid.Column="1" VerticalAlignment="Center" Margin="24,0"
-                       FontSize="{DynamicResource TitleFontSize}" FontWeight="SemiBold"
-                       TextTrimming="CharacterEllipsis" />
-            <local:TileButton Grid.Column="2" Content="{local:Tr common.quit}" Click="OnQuitClick" />
+            <Grid Width="{DynamicResource SideButtonWidth}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <local:TileButton x:Name="BackButton" Content="{local:Tr common.back}" Click="OnBackClick" />
+                <local:TileButton x:Name="HomeButton" Grid.Row="1" Content="{local:Tr common.home}" Click="OnHomeClick" />
+                <local:TileButton Grid.Row="3" Content="{local:Tr common.quit}" Click="OnQuitClick" />
+            </Grid>
 
-            <ContentControl x:Name="PageHost" Grid.Row="1" Grid.ColumnSpan="3" Focusable="False" />
+            <ContentControl x:Name="SideHost" Grid.Column="1" Focusable="False" />
+
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <TextBlock x:Name="TitleText" Margin="12,6,12,0"
+                           FontSize="{DynamicResource TitleFontSize}" FontWeight="SemiBold"
+                           TextWrapping="Wrap" />
+                <ContentControl x:Name="PageHost" Grid.Row="1" Focusable="False" />
+            </Grid>
         </Grid>
 
         <Grid x:Name="QuitPanel" Visibility="Collapsed" Background="#E61E1E24">

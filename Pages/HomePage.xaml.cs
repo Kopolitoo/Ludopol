@@ -13,6 +13,8 @@ namespace Ludopol
 
         public string Title => Texts.Get("home.title");
 
+        public UIElement? SideContent => null;
+
         public void OnShown() { }
 
         public void OnLeaving() { }

@@ -5,7 +5,8 @@ using System.Windows.Markup;
 namespace Ludopol
 {
     /// <summary>
-    /// VIEW: a scrolling area with two big buttons on its right, "Up" and "Down".
+    /// VIEW: a scrolling area with two big buttons on its right, "Up" and "Down", each
+    /// taking half of the height of the screen.
     ///
     /// The area scrolls with the mouse wheel, so with Prunel's scroll mode, and with the
     /// buttons (by most of a screen at a time). A button is greyed out when there is nothing
@@ -44,8 +45,12 @@ namespace Ludopol
             SetRowSpan(Viewer, 2);
             Children.Add(Viewer);
 
-            _up = new TileButton { Content = "▲\n" + Texts.Get("scroll.up"), VerticalAlignment = VerticalAlignment.Stretch };
-            _down = new TileButton { Content = "▼\n" + Texts.Get("scroll.down"), VerticalAlignment = VerticalAlignment.Stretch };
+            // RepeatOnHover: with hover activation, the area goes on scrolling while the cursor
+            // stays on the button.
+            _up = new TileButton { Content = "▲\n" + Texts.Get("scroll.up"), RepeatOnHover = true };
+            _down = new TileButton { Content = "▼\n" + Texts.Get("scroll.down"), RepeatOnHover = true };
+            _up.SetResourceReference(WidthProperty, "SideButtonWidth");
+            _down.SetResourceReference(WidthProperty, "SideButtonWidth");
             SetColumn(_up, 1);
             SetColumn(_down, 1);
             SetRow(_down, 1);
