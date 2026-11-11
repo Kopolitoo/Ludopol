@@ -10,7 +10,8 @@ namespace Ludopol
     ///   1. reads the settings (settings.json, see AppSettings);
     ///   2. loads the interface texts in the chosen language (Languages/*.json, see Texts);
     ///   3. opens the database (creates it with two fictitious games the first time);
-    ///   4. shows the main window.
+    ///   4. checks which games are installed (GameLauncher.cs);
+    ///   5. shows the main window.
     ///
     /// Ludopol's own files live in %LocalAppData%\Ludopol (DataFolder):
     /// settings.json, ludopol.db (the catalogue) and ludopol.log (what happened, for debugging).
@@ -37,6 +38,16 @@ namespace Ludopol
 
             Database = new Database(Path.Combine(DataFolder, "ludopol.db"));
             Database.Open();
+
+            // Which games are installed: Steam's libraries and the programs chosen in Ludopol.
+            try
+            {
+                GameLauncher.RefreshAll(Database);
+            }
+            catch (Exception ex)
+            {
+                Log("Installed games not checked: " + ex);
+            }
 
             // "Ludopol." is needed here: inside App, "MainWindow" alone means Application.MainWindow.
             Ludopol.MainWindow window = new Ludopol.MainWindow();

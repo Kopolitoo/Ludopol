@@ -171,6 +171,65 @@ namespace Ludopol
         }
 
         /// <summary>
+        /// Recomputes "installed" for every game with the given test (steam number, program),
+        /// in one transaction. Returns how many games are installed.
+        /// </summary>
+        public int UpdateInstalled(Func<long?, string?, bool> isInstalled)
+        {
+            int installed = 0;
+            using (SqliteConnection connection = Connect())
+            using (SqliteTransaction transaction = connection.BeginTransaction())
+            {
+                List<(long Id, bool Installed)> changes = new List<(long, bool)>();
+                SqliteCommand read = connection.CreateCommand();
+                read.Transaction = transaction;
+                read.CommandText = "SELECT id, steam_app_id, launch_target, installed FROM games";
+                using (SqliteDataReader reader = read.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        long? steam = reader.IsDBNull(1) ? null : reader.GetInt64(1);
+                        string? target = reader.IsDBNull(2) ? null : reader.GetString(2);
+                        bool now = isInstalled(steam, target);
+                        if (now)
+                        {
+                            installed++;
+                        }
+                        if (now != (reader.GetInt64(3) == 1))
+                        {
+                            changes.Add((reader.GetInt64(0), now));
+                        }
+                    }
+                }
+                foreach ((long id, bool now) in changes)
+                {
+                    SqliteCommand update = connection.CreateCommand();
+                    update.Transaction = transaction;
+                    update.CommandText = "UPDATE games SET installed = $installed WHERE id = $id";
+                    update.Parameters.AddWithValue("$installed", now ? 1 : 0);
+                    update.Parameters.AddWithValue("$id", id);
+                    update.ExecuteNonQuery();
+                }
+                transaction.Commit();
+            }
+            return installed;
+        }
+
+        /// <summary>Saves where a game is on this computer: installed, and the program chosen to start it (or null).</summary>
+        public void SaveInstallation(Game game)
+        {
+            using (SqliteConnection connection = Connect())
+            {
+                SqliteCommand command = connection.CreateCommand();
+                command.CommandText = "UPDATE games SET installed = $installed, launch_target = $launch WHERE id = $id";
+                command.Parameters.AddWithValue("$installed", game.Installed ? 1 : 0);
+                command.Parameters.AddWithValue("$launch", (object?)game.LaunchTarget ?? DBNull.Value);
+                command.Parameters.AddWithValue("$id", game.Id);
+                command.ExecuteNonQuery();
+            }
+        }
+
+        /// <summary>
         /// Finds a game: by its Steam number when it has one, otherwise by its name (case
         /// ignored). Returns it with its categories and tags, or null.
         /// </summary>

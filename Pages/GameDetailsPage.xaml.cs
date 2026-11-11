@@ -9,6 +9,12 @@ namespace Ludopol
     /// <summary>
     /// VIEW: the page of one game.
     ///
+    /// Under the image (BuildActions): "Play" when the game is installed (with a confirmation,
+    /// see PlayPanel), otherwise "Install with Steam" for a Steam game; and "Choose the
+    /// program" for a game outside Steam, or to start a Steam game another way. Whether the
+    /// game is installed is checked again each time the page is shown and each time Ludopol
+    /// comes back to the front (after an installation in Steam, for example).
+    ///
     /// The right part is built in code (BuildInfo), section by section. Each choice
     /// (compatibility, owned on Steam, tried, rating, to publish) is a row of big buttons; the chosen one is
     /// blue. A choice is saved in the database at once. "My notes" is an ordinary text field
@@ -19,6 +25,9 @@ namespace Ludopol
         private readonly long _gameId;
         private Game? _game;
         private TextBox? _notesBox;
+
+        /// <summary>What happened after a button under the image (launch error…), shown under them.</summary>
+        private string? _actionMessage;
 
         public GameDetailsPage(long gameId)
         {
@@ -40,11 +49,22 @@ namespace Ludopol
                 return;
             }
             ShowImage(_game);
+            CheckInstalled();
+            BuildActions(_game);
             BuildInfo(_game);
+            Application.Current.Activated += OnAppActivated;
         }
 
         /// <summary>Saves my notes if they changed.</summary>
         public void OnLeaving()
+        {
+            Application.Current.Activated -= OnAppActivated;
+            PlayPanel.Visibility = Visibility.Collapsed;
+            _actionMessage = null;
+            SaveNotes();
+        }
+
+        private void SaveNotes()
         {
             if (_game == null || _notesBox == null)
             {
@@ -57,6 +77,171 @@ namespace Ludopol
                 App.Database.SaveUserFields(_game);
             }
         }
+
+        // ----- Play, install, choose the program -----
+
+        /// <summary>Ludopol is back in front: the game may have been installed or removed meanwhile.</summary>
+        private void OnAppActivated(object? sender, EventArgs e)
+        {
+            if (_game == null)
+            {
+                return;
+            }
+            bool before = _game.Installed;
+            CheckInstalled();
+            if (_game.Installed != before)
+            {
+                _actionMessage = null;
+                BuildActions(_game);
+            }
+        }
+
+        private void CheckInstalled()
+        {
+            if (_game == null)
+            {
+                return;
+            }
+            try
+            {
+                GameLauncher.Refresh(_game, App.Database);
+            }
+            catch (Exception ex)
+            {
+                App.Log("Installation of \"" + _game.Name + "\" not checked: " + ex.Message);
+            }
+        }
+
+        private void BuildActions(Game game)
+        {
+            Actions.Children.Clear();
+
+            if (game.Installed)
+            {
+                TileButton play = AddAction("details.play");
+                play.SetResourceReference(FontSizeProperty, "TitleFontSize");
+                play.Click += (s, e) =>
+                {
+                    PlayQuestion.Text = Texts.Format("play.question", game.Name);
+                    PlayPanel.Visibility = Visibility.Visible;
+                };
+            }
+            else
+            {
+                AddActionText(Texts.Get("details.notInstalled"), muted: true);
+                if (game.SteamAppId.HasValue)
+                {
+                    TileButton install = AddAction("details.installWithSteam");
+                    install.Click += (s, e) => RunAction(() =>
+                    {
+                        GameLauncher.InstallWithSteam(game);
+                        _actionMessage = Texts.Get("details.installStarted");
+                    });
+                }
+            }
+
+            TileButton choose = AddAction("details.chooseProgram");
+            choose.SetResourceReference(FontSizeProperty, "SmallFontSize");
+            choose.Click += (s, e) => ChooseProgram(game);
+            if (!string.IsNullOrEmpty(game.LaunchTarget))
+            {
+                AddActionText(Texts.Format("details.program", game.LaunchTarget), muted: true);
+                TileButton forget = AddAction("details.forgetProgram");
+                forget.SetResourceReference(FontSizeProperty, "SmallFontSize");
+                forget.Click += (s, e) => SetProgram(game, null);
+            }
+
+            if (_actionMessage != null)
+            {
+                AddActionText(_actionMessage, muted: false);
+            }
+        }
+
+        private void OnPlayConfirmClick(object sender, RoutedEventArgs e)
+        {
+            PlayPanel.Visibility = Visibility.Collapsed;
+            if (_game != null)
+            {
+                Game game = _game;
+                RunAction(() =>
+                {
+                    GameLauncher.Play(game);
+                    _actionMessage = Texts.Get("play.started");
+                });
+            }
+        }
+
+        private void OnPlayCancelClick(object sender, RoutedEventArgs e)
+        {
+            PlayPanel.Visibility = Visibility.Collapsed;
+        }
+
+        /// <summary>Runs a button's action; an error is logged and shown under the buttons.</summary>
+        private void RunAction(Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception ex)
+            {
+                App.Log("Action failed for \"" + _game?.Name + "\": " + ex);
+                _actionMessage = Texts.Format("play.error", ex.Message);
+            }
+            if (_game != null)
+            {
+                BuildActions(_game);
+            }
+        }
+
+        /// <summary>The Windows file picker, to choose the game's program (.exe) or a shortcut to it.</summary>
+        private void ChooseProgram(Game game)
+        {
+            Microsoft.Win32.OpenFileDialog dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = Texts.Get("details.chooseProgram"),
+                Filter = Texts.Get("details.programFilter") + " (*.exe, *.lnk, *.url)|*.exe;*.lnk;*.url",
+                // Keeps a shortcut as it is: it may carry options for the game.
+                DereferenceLinks = false,
+            };
+            string? folder = System.IO.Path.GetDirectoryName(game.LaunchTarget ?? "");
+            if (!string.IsNullOrEmpty(folder) && System.IO.Directory.Exists(folder))
+            {
+                dialog.InitialDirectory = folder;
+            }
+            if (dialog.ShowDialog(Window.GetWindow(this)) == true)
+            {
+                SetProgram(game, dialog.FileName);
+            }
+        }
+
+        private void SetProgram(Game game, string? program)
+        {
+            game.LaunchTarget = program;
+            _actionMessage = null;
+            App.Database.SaveInstallation(game);
+            CheckInstalled();   // saves "installed" again if it changed
+            BuildActions(game);
+        }
+
+        private TileButton AddAction(string textKey)
+        {
+            TileButton button = new TileButton { Content = Texts.Get(textKey) };
+            Actions.Children.Add(button);
+            return button;
+        }
+
+        private void AddActionText(string text, bool muted)
+        {
+            TextBlock block = new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(12, 12, 12, 0) };
+            if (muted)
+            {
+                block.Foreground = (System.Windows.Media.Brush)FindResource("MutedTextBrush");
+            }
+            Actions.Children.Add(block);
+        }
+
+        // ----- The right part -----
 
         private void ShowImage(Game game)
         {
@@ -141,7 +326,7 @@ namespace Ludopol
                     return;
                 }
                 apply(value);
-                OnLeaving();   // keeps the notes typed so far
+                SaveNotes();   // keeps the notes typed so far
                 App.Database.SaveUserFields(_game);
                 double offset = Scroll.Viewer.VerticalOffset;
                 BuildInfo(_game);

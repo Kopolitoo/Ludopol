@@ -9,9 +9,8 @@ les lancer.
 
 ## État
 
-Étape 3 : import de la feuille de jeux. Au départ, le catalogue contient deux jeux **fictifs**
-pour essayer l'interface ; ils sont retirés au premier import. Le bouton « Jouer » (étape 4)
-viendra ensuite.
+Étape 4 : jeux installés et bouton « Jouer ». Au départ, le catalogue contient deux jeux
+**fictifs** pour essayer l'interface ; ils sont retirés au premier import de la feuille.
 
 ## Importer la feuille de jeux
 
@@ -27,6 +26,23 @@ et les images.
   ce qui a été rempli dans Ludopol (note, compatibilité, essayé, remarques, à publier, possédé).
 - Deux lignes avec le même lien Steam : celle dont le nom correspond au texte du lien garde les
   données Steam, l'autre est importée sans, et son nom est signalé pour corriger la feuille.
+
+## Jouer
+
+Ludopol regarde quels jeux sont installés au démarrage, après un import, et avec Paramètres →
+« Rechercher les jeux installés ». La fiche d'un jeu vérifie aussi à chaque affichage, et quand on
+revient dans Ludopol (après une installation dans Steam, par exemple).
+
+- **Jeux Steam** : Ludopol lit les fichiers de Steam (dossier trouvé dans le registre, puis
+  `steamapps\libraryfolders.vdf` pour toutes les bibliothèques, et un `appmanifest_<numéro>.acf`
+  par jeu). Steam n'a pas besoin d'être ouvert. Un jeu en cours de téléchargement ne compte pas.
+- **« Jouer »** demande une confirmation (« Oui, jouer » / « Non ») pour qu'un regard ne lance pas
+  un jeu par erreur, puis lance le programme choisi s'il y en a un, sinon demande à Steam de
+  lancer le jeu.
+- **« Installer avec Steam »** (jeu Steam pas installé) ouvre la fenêtre d'installation de Steam.
+- **« Choisir le programme du jeu… »** : pour un jeu hors Steam, ou pour lancer un jeu Steam
+  autrement. On choisit un `.exe` ou un raccourci (`.lnk`, `.url`) ; le jeu compte alors comme
+  installé tant que ce fichier existe.
 
 ## Compiler et lancer
 
