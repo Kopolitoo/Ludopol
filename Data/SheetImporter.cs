@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net;
 using System.Text.RegularExpressions;
 
 namespace Ludopol
@@ -216,8 +217,12 @@ namespace Ludopol
             return Compatibility.Unknown;
         }
 
+        /// <summary>
+        /// The text of a cell. HTML codes left by the Steam data in the sheet ("&amp;quot;",
+        /// "&amp;amp;"…) are turned back into their character (" and &amp;).
+        /// </summary>
         private static string Text(Dictionary<string, XlsxCell> row, string header) =>
-            row.TryGetValue(header, out XlsxCell? cell) ? cell.Text.Trim() : "";
+            row.TryGetValue(header, out XlsxCell? cell) ? WebUtility.HtmlDecode(cell.Text).Trim() : "";
 
         /// <summary>A date is a number of days in Excel: written back as "17 sept. 2019".</summary>
         private static string DateText(Dictionary<string, XlsxCell> row, string header)
