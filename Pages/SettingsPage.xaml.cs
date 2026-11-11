@@ -17,6 +17,9 @@ namespace Ludopol
     /// </summary>
     public partial class SettingsPage : UserControl, IPage
     {
+        /// <summary>The summary of the last import, shown under its buttons until the page is left.</summary>
+        private string? _importSummary;
+
         private static readonly int[] Delays = { 500, 750, 1000, 1500, 2000, 3000 };
 
         /// <summary>The four steps of each size: small, medium, large, very large.</summary>
@@ -36,12 +39,14 @@ namespace Ludopol
 
         public void OnShown() => Build();
 
-        public void OnLeaving() { }
+        public void OnLeaving() => _importSummary = null;
 
         private void Build()
         {
             AppSettings settings = AppSettings.Current;
             Info.Children.Clear();
+
+            AddImportSection(settings);
 
             AddTitle("settings.fullScreen");
             AddChoices(new[] { true, false }, v => Texts.Get(v ? "common.yes" : "common.no"),
@@ -86,6 +91,92 @@ namespace Ludopol
                 Foreground = (System.Windows.Media.Brush)FindResource("MutedTextBrush"),
                 Margin = new Thickness(12, 0, 12, 24),
             });
+        }
+
+        /// <summary>
+        /// "Import my sheet": one button opens the Windows file picker; when a sheet was already
+        /// imported, a second button imports the same file again without the picker.
+        /// </summary>
+        private void AddImportSection(AppSettings settings)
+        {
+            AddTitle("import.title");
+            WrapPanel row = new WrapPanel();
+
+            TileButton choose = new TileButton { Content = Texts.Get("import.choose") };
+            choose.SetResourceReference(WidthProperty, "WideButtonWidth");
+            choose.Click += (s, e) => ChooseAndImport();
+            row.Children.Add(choose);
+
+            if (!string.IsNullOrEmpty(settings.LastImportPath) && System.IO.File.Exists(settings.LastImportPath))
+            {
+                TileButton again = new TileButton
+                {
+                    Content = Texts.Format("import.again", System.IO.Path.GetFileName(settings.LastImportPath)),
+                };
+                again.SetResourceReference(WidthProperty, "WideButtonWidth");
+                again.Click += (s, e) => RunImport(settings.LastImportPath);
+                row.Children.Add(again);
+            }
+            Info.Children.Add(row);
+
+            if (_importSummary != null)
+            {
+                Info.Children.Add(new TextBlock
+                {
+                    Text = _importSummary,
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(12, 0, 12, 12),
+                });
+            }
+        }
+
+        private void ChooseAndImport()
+        {
+            Microsoft.Win32.OpenFileDialog dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = Texts.Get("import.title"),
+                Filter = Texts.Get("import.filter") + " (*.xlsx)|*.xlsx",
+            };
+            string? last = AppSettings.Current.LastImportPath;
+            if (!string.IsNullOrEmpty(last) && System.IO.Directory.Exists(System.IO.Path.GetDirectoryName(last)))
+            {
+                dialog.InitialDirectory = System.IO.Path.GetDirectoryName(last);
+            }
+            if (dialog.ShowDialog(Window.GetWindow(this)) == true)
+            {
+                RunImport(dialog.FileName);
+            }
+        }
+
+        /// <summary>Imports a sheet, remembers its path, and shows the summary.</summary>
+        private void RunImport(string path)
+        {
+            try
+            {
+                ImportResult result = SheetImporter.Import(path, App.Database);
+                AppSettings.Current.LastImportPath = path;
+                AppSettings.Current.Save();
+
+                List<string> lines = new List<string>
+                {
+                    Texts.Format("import.result", result.Read, result.Added, result.Updated),
+                };
+                if (result.SamplesRemoved > 0)
+                {
+                    lines.Add(Texts.Get("import.samplesRemoved"));
+                }
+                if (result.SteamConflicts.Count > 0)
+                {
+                    lines.Add(Texts.Format("import.conflicts", string.Join(", ", result.SteamConflicts)));
+                }
+                _importSummary = string.Join("\n", lines);
+            }
+            catch (Exception ex)
+            {
+                App.Log("Import failed for " + path + ": " + ex);
+                _importSummary = Texts.Format("import.error", ex.Message);
+            }
+            Build();
         }
 
         /// <summary>A size row: four buttons small → very large, for the given values.</summary>

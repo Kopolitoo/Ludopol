@@ -62,5 +62,13 @@
   "settings.size.veryLarge": "Very large",
   "settings.language": "Language",
   "settings.languageNote": "The new language applies at the next start of Ludopol.",
-  "settings.fullScreen": "Full screen"
+  "settings.fullScreen": "Full screen",
+  "import.title": "Import my games sheet",
+  "import.choose": "Choose the sheet (.xlsx)…",
+  "import.again": "Import again: {0}",
+  "import.filter": "Excel sheet",
+  "import.result": "{0} games read: {1} added, {2} updated.",
+  "import.samplesRemoved": "The two fictitious games have been removed.",
+  "import.conflicts": "Same Steam link as another row, imported without Steam data (to check in the sheet): {0}",
+  "import.error": "Import failed: {0}"
 }
