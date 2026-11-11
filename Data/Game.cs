@@ -51,9 +51,12 @@ namespace Ludopol
         public string? Notes { get; set; }
         public bool ToPublish { get; set; }
 
-        // --- On this computer (step 4) ---
+        // --- On this computer (step 4, see GameLauncher.cs) ---
         public bool Installed { get; set; }
-        /// <summary>How to start the game: a steam:// address or a program path.</summary>
+        /// <summary>
+        /// The program chosen to start the game (.exe, or a shortcut .lnk / .url), or null:
+        /// a Steam game is then started by Steam.
+        /// </summary>
         public string? LaunchTarget { get; set; }
 
         /// <summary>When the game was added to the catalogue ("Recently added").</summary>

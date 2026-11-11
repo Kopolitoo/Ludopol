@@ -20,6 +20,9 @@ namespace Ludopol
         /// <summary>The summary of the last import, shown under its buttons until the page is left.</summary>
         private string? _importSummary;
 
+        /// <summary>The result of the last search for installed games, shown until the page is left.</summary>
+        private string? _installedSummary;
+
         private static readonly int[] Delays = { 500, 750, 1000, 1500, 2000, 3000 };
 
         /// <summary>The four steps of each size: small, medium, large, very large.</summary>
@@ -39,7 +42,11 @@ namespace Ludopol
 
         public void OnShown() => Build();
 
-        public void OnLeaving() => _importSummary = null;
+        public void OnLeaving()
+        {
+            _importSummary = null;
+            _installedSummary = null;
+        }
 
         private void Build()
         {
@@ -47,6 +54,7 @@ namespace Ludopol
             Info.Children.Clear();
 
             AddImportSection(settings);
+            AddInstalledSection();
 
             AddTitle("settings.fullScreen");
             AddChoices(new[] { true, false }, v => Texts.Get(v ? "common.yes" : "common.no"),
@@ -130,6 +138,49 @@ namespace Ludopol
             }
         }
 
+        /// <summary>
+        /// "Search for installed games": looks again at Steam's libraries and at the programs
+        /// chosen on the games' pages (also done at each start of Ludopol).
+        /// </summary>
+        private void AddInstalledSection()
+        {
+            AddTitle("installed.title");
+            TileButton search = new TileButton { Content = Texts.Get("installed.search") };
+            search.SetResourceReference(WidthProperty, "WideButtonWidth");
+            search.Click += (s, e) => SearchInstalled();
+            Info.Children.Add(new WrapPanel { Children = { search } });
+
+            if (_installedSummary != null)
+            {
+                Info.Children.Add(new TextBlock
+                {
+                    Text = _installedSummary,
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(12, 0, 12, 12),
+                });
+            }
+        }
+
+        private void SearchInstalled()
+        {
+            try
+            {
+                int count = GameLauncher.RefreshAll(App.Database);
+                SteamLibrary steam = GameLauncher.Steam;
+                List<string> lines = new List<string> { Texts.Format("installed.result", count) };
+                lines.Add(steam.SteamFolder == null
+                    ? Texts.Get("installed.noSteam")
+                    : Texts.Format("installed.libraries", string.Join(", ", steam.Libraries)));
+                _installedSummary = string.Join("\n", lines);
+            }
+            catch (Exception ex)
+            {
+                App.Log("Search for installed games failed: " + ex);
+                _installedSummary = Texts.Format("installed.error", ex.Message);
+            }
+            Build();
+        }
+
         private void ChooseAndImport()
         {
             Microsoft.Win32.OpenFileDialog dialog = new Microsoft.Win32.OpenFileDialog
@@ -154,6 +205,7 @@ namespace Ludopol
             try
             {
                 ImportResult result = SheetImporter.Import(path, App.Database);
+                GameLauncher.RefreshAll(App.Database);   // the new games may already be installed
                 AppSettings.Current.LastImportPath = path;
                 AppSettings.Current.Save();
 
