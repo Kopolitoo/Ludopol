@@ -157,5 +157,8 @@
   "sort.rating.ascending": "Lowest rated first",
   "sort.rating.descending": "Best rated first",
   "sort.compatibility.ascending": "Least compatible first",
-  "sort.compatibility.descending": "Most compatible first"
+  "sort.compatibility.descending": "Most compatible first",
+  "sort.count": "Number of games",
+  "sort.count.ascending": "Fewest games first",
+  "sort.count.descending": "Most games first"
 }

@@ -49,13 +49,16 @@ namespace Ludopol
         }
 
         /// <summary>
-        /// Keyboard shortcuts, everywhere except while typing in a text field:
+        /// Keyboard shortcuts (in a text field, only Page Up / Page Down):
         /// Backspace = "Back"; Page Up / Page Down, Home / End, arrows = scroll the page
         /// (see ScrollPanel.HandleKey).
         /// </summary>
         private void OnPreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
-            if (System.Windows.Input.Keyboard.FocusedElement is TextBox)
+            // In a text field (the search), the keys write and move the cursor; only
+            // Page Up / Page Down still scroll the page.
+            if (System.Windows.Input.Keyboard.FocusedElement is TextBox
+                && e.Key != System.Windows.Input.Key.PageUp && e.Key != System.Windows.Input.Key.PageDown)
             {
                 return;
             }

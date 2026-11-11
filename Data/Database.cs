@@ -510,6 +510,17 @@ namespace Ludopol
                 FROM game_categories c GROUP BY c.name")
                 .OrderBy(c => c.Name, NameOrder).ToList();
 
+        /// <summary>Sorts names by name, or by number of games (then by name).</summary>
+        public static List<NamedCount> SortNames(List<NamedCount> names, bool byCount, bool descending)
+        {
+            if (!byCount)
+            {
+                return (descending ? names.OrderByDescending(n => n.Name, NameOrder) : names.OrderBy(n => n.Name, NameOrder)).ToList();
+            }
+            IOrderedEnumerable<NamedCount> sorted = descending ? names.OrderByDescending(n => n.Count) : names.OrderBy(n => n.Count);
+            return sorted.ThenBy(n => n.Name, NameOrder).ToList();
+        }
+
         /// <summary>The Steam tags, the most used first.</summary>
         public List<NamedCount> GetTags() =>
             ReadCounts("SELECT name, COUNT(*) FROM game_tags GROUP BY name")

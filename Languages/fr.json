@@ -157,5 +157,8 @@
   "sort.rating.ascending": "Moins bien notés d'abord",
   "sort.rating.descending": "Mieux notés d'abord",
   "sort.compatibility.ascending": "Moins compatibles d'abord",
-  "sort.compatibility.descending": "Plus compatibles d'abord"
+  "sort.compatibility.descending": "Plus compatibles d'abord",
+  "sort.count": "Nombre de jeux",
+  "sort.count.ascending": "Moins de jeux d'abord",
+  "sort.count.descending": "Plus de jeux d'abord"
 }
