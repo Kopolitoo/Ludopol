@@ -238,20 +238,40 @@ namespace Ludopol
             sync.SetResourceReference(WidthProperty, "WideButtonWidth");
             sync.Click += (s, e) => SyncSteam(account);
             row.Children.Add(sync);
-
-            if (_missingGames != null && _missingGames.Count > 0)
-            {
-                TileButton add = new TileButton { Content = Texts.Format("steamSync.addMissing", _missingGames.Count) };
-                add.SetResourceReference(WidthProperty, "WideButtonWidth");
-                add.Click += (s, e) => AddMissingGames();
-                row.Children.Add(add);
-            }
             Info.Children.Add(row);
 
             if (_steamSummary != null)
             {
                 AddText(_steamSummary, muted: false);
             }
+            if (_missingGames != null && _missingGames.Count > 0)
+            {
+                AddMissingList(_missingGames);
+            }
+        }
+
+        /// <summary>
+        /// The owned games missing from the catalogue, after a synchronisation: "Add all", then
+        /// one button per game, which adds that game alone.
+        /// </summary>
+        private void AddMissingList(List<OwnedGame> missing)
+        {
+            TileButton addAll = new TileButton { Content = Texts.Format("steamSync.addMissing", missing.Count) };
+            addAll.SetResourceReference(WidthProperty, "WideButtonWidth");
+            addAll.Click += (s, e) => AddMissingGames(missing.ToList());
+            Info.Children.Add(new WrapPanel { Children = { addAll } });
+
+            AddText(Texts.Get("steamSync.missing"), muted: false);
+            WrapPanel games = new WrapPanel();
+            foreach (OwnedGame game in missing)
+            {
+                TileButton button = new TileButton { Content = game.Name };
+                button.SetResourceReference(WidthProperty, "WideButtonWidth");
+                button.SetResourceReference(FontSizeProperty, "SmallFontSize");
+                button.Click += (s, e) => AddMissingGames(new List<OwnedGame> { game });
+                games.Children.Add(button);
+            }
+            Info.Children.Add(games);
         }
 
         /// <summary>The account chosen in the settings, otherwise the one most recently used in Steam.</summary>
@@ -299,12 +319,6 @@ namespace Ludopol
                 {
                     Texts.Format("steamSync.result", result.Owned, result.OwnedInCatalogue, result.Missing.Count),
                 };
-                if (result.Missing.Count > 0)
-                {
-                    const int shown = 30;
-                    string names = string.Join(", ", result.Missing.Take(shown).Select(g => g.Name));
-                    lines.Add(Texts.Format("steamSync.missing", result.Missing.Count > shown ? names + "…" : names));
-                }
                 _steamSummary = string.Join("\n", lines);
             }
             catch (Exception ex)
@@ -316,25 +330,26 @@ namespace Ludopol
             Build();
         }
 
-        private void AddMissingGames()
+        /// <summary>Adds some of the missing games (one, or all) and takes them off the list.</summary>
+        private void AddMissingGames(List<OwnedGame> games)
         {
-            if (_missingGames == null)
-            {
-                return;
-            }
             try
             {
-                int added = SteamSync.AddMissing(_missingGames, App.Database);
+                int added = SteamSync.AddMissing(games, App.Database);
                 GameLauncher.RefreshAll(App.Database);   // some of them may be installed
-                _steamSummary = Texts.Format("steamSync.added", added, Texts.Get("steamSync.newCategory"));
+                _steamSummary = games.Count == 1
+                    ? Texts.Format("steamSync.addedOne", games[0].Name, Texts.Get("steamSync.newCategory"))
+                    : Texts.Format("steamSync.added", added, Texts.Get("steamSync.newCategory"));
+                _missingGames?.RemoveAll(g => games.Contains(g));
             }
             catch (Exception ex)
             {
                 App.Log("Adding the Steam games failed: " + ex);
                 _steamSummary = Texts.Format("steamSync.error", ex.Message);
             }
-            _missingGames = null;
+            double offset = Scroll.Viewer.VerticalOffset;
             Build();
+            Scroll.Viewer.ScrollToVerticalOffset(offset);
         }
 
         private void AddText(string text, bool muted)

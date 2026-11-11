@@ -104,9 +104,10 @@
   "steamSync.badKey": "Steam refuses the key: please check it.",
   "steamSync.private": "Steam did not give the list: in Steam, Profile → Edit Profile → Privacy, set \"Game details\" to Public.",
   "steamSync.result": "{0} games bought on Steam. {1} games of the catalogue are now \"Owned on Steam\". {2} games bought are not in the catalogue.",
-  "steamSync.missing": "Not in the catalogue: {0}",
-  "steamSync.addMissing": "Add the {0} missing games",
+  "steamSync.missing": "Not in the catalogue: choose a game to add it alone, or add them all with the button above.",
+  "steamSync.addMissing": "Add the {0} games at once",
   "steamSync.newCategory": "To sort (Steam)",
   "steamSync.added": "{0} games added in the category \"{1}\".",
+  "steamSync.addedOne": "\"{0}\" added in the category \"{1}\".",
   "steamSync.error": "The synchronisation failed: {0}"
 }

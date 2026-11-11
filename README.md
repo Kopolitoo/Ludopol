@@ -56,8 +56,9 @@ achetés est demandée à Steam par Internet, dans Paramètres → « Bibliothè
    (ou la dicter). Elle est enregistrée dans `settings.json` : la garder pour soi.
 3. « Synchroniser avec Steam » : chaque jeu du catalogue qui a un numéro Steam passe à
    « Possédé sur Steam » oui ou non ; les jeux sans numéro Steam gardent ce qui a été mis à la
-   main. Les jeux achetés absents du catalogue sont listés, et « Ajouter les N jeux manquants »
-   les ajoute (nom, numéro et image Steam) dans la catégorie « À trier (Steam) ». Un import de
+   main. Les jeux achetés absents du catalogue s'affichent en boutons : un bouton ajoute
+   ce jeu seul, « Ajouter les N jeux d'un coup » les ajoute tous (nom, numéro et image Steam),
+   dans la catégorie « À trier (Steam) ». Un import de
    la feuille complète ensuite ceux qui y sont.
 
 Si Steam ne donne pas la liste : dans Steam, Profil → Modifier le profil → Confidentialité,

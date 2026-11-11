@@ -104,9 +104,10 @@
   "steamSync.badKey": "Steam refuse la clé : vérifiez-la.",
   "steamSync.private": "Steam n'a pas donné la liste : dans Steam, Profil → Modifier le profil → Confidentialité, mettez « Détails des jeux » sur Public.",
   "steamSync.result": "{0} jeux achetés sur Steam. {1} jeux du catalogue sont maintenant « Possédé sur Steam ». {2} jeux achetés ne sont pas dans le catalogue.",
-  "steamSync.missing": "Pas dans le catalogue : {0}",
-  "steamSync.addMissing": "Ajouter les {0} jeux manquants",
+  "steamSync.missing": "Pas dans le catalogue : choisissez un jeu pour l'ajouter seul, ou ajoutez-les tous avec le bouton ci-dessus.",
+  "steamSync.addMissing": "Ajouter les {0} jeux d'un coup",
   "steamSync.newCategory": "À trier (Steam)",
   "steamSync.added": "{0} jeux ajoutés dans la catégorie « {1} ».",
+  "steamSync.addedOne": "« {0} » ajouté dans la catégorie « {1} ».",
   "steamSync.error": "La synchronisation a échoué : {0}"
 }
