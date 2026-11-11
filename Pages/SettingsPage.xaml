@@ -1,0 +1,9 @@
+<UserControl x:Class="Ludopol.SettingsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Ludopol">
+    <!-- The settings: rows of big buttons, built in code (SettingsPage.xaml.cs). -->
+    <local:ScrollPanel x:Name="Scroll">
+        <StackPanel x:Name="Info" />
+    </local:ScrollPanel>
+</UserControl>

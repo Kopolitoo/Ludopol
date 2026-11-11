@@ -32,7 +32,12 @@ Dans `%LocalAppData%\Ludopol` :
 | `ludopol.log` | Ce qui s'est passé, pour chercher une erreur. |
 | `Categories\` | Facultatif : mes propres images de catégories, nommées comme la catégorie (`.png`, `.jpg`). Les caractères interdits dans un nom de fichier deviennent `_` : `Romans visuels _ Narratif.png`. Sans image, la carte prend celle d'un jeu de la catégorie. |
 
-## Réglages utiles (`settings.json`)
+## Réglages
+
+Le bouton « Paramètres » (colonne de gauche) règle au regard le survol, son délai, la taille
+du texte, des boutons et des tuiles, et la langue. Tout est enregistré dans `settings.json`,
+qu'on peut aussi modifier à la main, Ludopol fermé :
+
 
 | Réglage | Par défaut | Rôle |
 | --- | --- | --- |

@@ -48,5 +48,18 @@
   "details.rating": "My rating",
   "details.rating.none": "None",
   "details.toPublish": "To publish",
-  "details.notes": "My notes"
+  "details.notes": "My notes",
+  "settings.title": "Settings",
+  "settings.hoverActivation": "Activate a button by looking at it (hover)",
+  "settings.hoverDelay": "Hover delay",
+  "settings.seconds": "{0} s",
+  "settings.fontSize": "Text size",
+  "settings.buttonSize": "Button size",
+  "settings.tileSize": "Game tile size",
+  "settings.size.small": "Small",
+  "settings.size.medium": "Medium",
+  "settings.size.large": "Large",
+  "settings.size.veryLarge": "Very large",
+  "settings.language": "Language",
+  "settings.languageNote": "The new language applies at the next start of Ludopol."
 }

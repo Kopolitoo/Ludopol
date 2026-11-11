@@ -13,7 +13,8 @@
     <!--
       The only window, full screen, laid out in columns so that the content gets the whole
       height of the screen:
-        - left: navigation, one button under the other ("Back", "Home"… "Quit" at the bottom);
+        - left: navigation, one button under the other ("Back", "Home"… "Settings" and
+          "Quit" at the bottom);
         - next to it: the page's own buttons when it has some (the filters of a list: SideHost);
         - middle: the page title on one line, then the page (PageHost). A page that scrolls
           has its "Up" / "Down" buttons on the right edge (Ui/ScrollPanel.cs).
@@ -33,10 +34,12 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <local:TileButton x:Name="BackButton" Content="{local:Tr common.back}" Click="OnBackClick" />
                 <local:TileButton x:Name="HomeButton" Grid.Row="1" Content="{local:Tr common.home}" Click="OnHomeClick" />
-                <local:TileButton Grid.Row="3" Content="{local:Tr common.quit}" Click="OnQuitClick" />
+                <local:TileButton x:Name="SettingsButton" Grid.Row="3" Content="{local:Tr settings.title}" Click="OnSettingsClick" />
+                <local:TileButton Grid.Row="4" Content="{local:Tr common.quit}" Click="OnQuitClick" />
             </Grid>
 
             <ContentControl x:Name="SideHost" Grid.Column="1" Focusable="False" />

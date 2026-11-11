@@ -95,6 +95,14 @@ namespace Ludopol
 
         private void OnHomeClick(object sender, RoutedEventArgs e) => GoHome();
 
+        private void OnSettingsClick(object sender, RoutedEventArgs e)
+        {
+            if (_current is not SettingsPage)
+            {
+                Navigate(new SettingsPage());
+            }
+        }
+
         private void OnQuitClick(object sender, RoutedEventArgs e) => QuitPanel.Visibility = Visibility.Visible;
 
         private void OnQuitCancelClick(object sender, RoutedEventArgs e) => QuitPanel.Visibility = Visibility.Collapsed;

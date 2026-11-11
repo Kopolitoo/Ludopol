@@ -129,37 +129,24 @@ namespace Ludopol
         }
 
         /// <summary>
-        /// A row of big buttons, one per possible value; the current value is blue.
-        /// Choosing a value saves it and redraws the page.
+        /// A row of big buttons for one of my fields (see Ui/ChoiceRow.cs). Choosing a value
+        /// saves it at once and redraws the page.
         /// </summary>
         private void AddChoices<T>(IEnumerable<T> values, Func<T, string> label, T current, Action<T> apply)
         {
-            WrapPanel row = new WrapPanel();
-            foreach (T value in values)
+            Info.Children.Add(ChoiceRow.Create(values, label, current, value =>
             {
-                TileButton button = new TileButton
+                if (_game == null)
                 {
-                    Content = label(value),
-                    IsSelected = EqualityComparer<T>.Default.Equals(value, current),
-                    MaxWidth = (double)FindResource("WideButtonWidth"),
-                    FontSize = (double)FindResource("SmallFontSize"),
-                };
-                button.Click += (s, e) =>
-                {
-                    if (_game == null)
-                    {
-                        return;
-                    }
-                    apply(value);
-                    OnLeaving();   // keeps the notes typed so far
-                    App.Database.SaveUserFields(_game);
-                    double offset = Scroll.Viewer.VerticalOffset;
-                    BuildInfo(_game);
-                    Scroll.Viewer.ScrollToVerticalOffset(offset);
-                };
-                row.Children.Add(button);
-            }
-            Info.Children.Add(row);
+                    return;
+                }
+                apply(value);
+                OnLeaving();   // keeps the notes typed so far
+                App.Database.SaveUserFields(_game);
+                double offset = Scroll.Viewer.VerticalOffset;
+                BuildInfo(_game);
+                Scroll.Viewer.ScrollToVerticalOffset(offset);
+            }));
         }
 
         private void AddTitle(string key)
