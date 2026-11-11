@@ -109,6 +109,32 @@ namespace Ludopol
             }
         }
 
+        /// <summary>"Complete from Steam": asks the store now, then says what happened under the buttons.</summary>
+        private async void CompleteFromSteamNow(Game game)
+        {
+            _actionMessage = Texts.Get("details.completing");
+            BuildActions(game);
+            try
+            {
+                bool changed = await SteamStore.CompleteAsync(game, App.Database);
+                _actionMessage = Texts.Get(changed ? "details.completed" : "details.nothingToComplete");
+            }
+            catch (Exception ex)
+            {
+                App.Log("Steam store: \"" + game.Name + "\" not completed: " + ex.Message);
+                _actionMessage = Texts.Format("play.error", ex.Message);
+            }
+            if (_game != game || !IsLoaded)
+            {
+                return;
+            }
+            ShowImage(game);
+            BuildActions(game);
+            double offset = Scroll.Viewer.VerticalOffset;
+            BuildInfo(game);
+            Scroll.Viewer.ScrollToVerticalOffset(offset);
+        }
+
         // ----- Play, install, choose the program -----
 
         /// <summary>Ludopol is back in front: the game may have been installed or removed meanwhile.</summary>
@@ -177,6 +203,11 @@ namespace Ludopol
                 TileButton store = AddAction("details.steamStore");
                 store.SetResourceReference(FontSizeProperty, "SmallFontSize");
                 store.Click += (s, e) => RunAction(() => GameLauncher.OpenSteamStore(game));
+
+                // Fills what is missing (description, tags…) from the Steam store; replaces nothing.
+                TileButton complete = AddAction("details.completeFromSteam");
+                complete.SetResourceReference(FontSizeProperty, "SmallFontSize");
+                complete.Click += (s, e) => CompleteFromSteamNow(game);
             }
 
             // Choosing a program is for games outside Steam: not offered for a game bought on

@@ -68,7 +68,8 @@ Les jeux ajoutés depuis Steam sont ensuite complétés depuis le magasin Steam,
 (environ 1,5 s par jeu) : description, développeur, date, genres, prix, français et tags. Seuls
 les champs vides sont remplis ; la catégorie reste « À trier (Steam) ». Le bouton « Compléter
 les fiches depuis le magasin Steam » relance cela pour tous les jeux Steam sans description, et
-la fiche d'un tel jeu se complète aussi à son ouverture.
+la fiche d'un tel jeu se complète aussi à son ouverture. Sur la fiche de tout jeu présent sur Steam (acheté ou
+non), « Compléter la fiche depuis Steam » fait de même à la demande.
 
 Si Steam ne donne pas la liste : dans Steam, Profil → Modifier le profil → Confidentialité,
 mettre « Détails des jeux » sur Public.

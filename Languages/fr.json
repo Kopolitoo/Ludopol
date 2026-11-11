@@ -138,5 +138,9 @@
   "steamStore.free": "Gratuit",
   "details.editCategories": "Modifier les catégories",
   "menu.add": "Ajouter",
-  "menu.done": "Terminé"
+  "menu.done": "Terminé",
+  "details.completeFromSteam": "Compléter la fiche depuis Steam",
+  "details.completing": "Recherche sur le magasin Steam…",
+  "details.completed": "Fiche complétée depuis Steam.",
+  "details.nothingToComplete": "Rien à compléter : Steam n'a rien de plus pour les champs vides."
 }

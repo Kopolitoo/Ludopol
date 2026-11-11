@@ -138,5 +138,9 @@
   "steamStore.free": "Free",
   "details.editCategories": "Change the categories",
   "menu.add": "Add",
-  "menu.done": "Done"
+  "menu.done": "Done",
+  "details.completeFromSteam": "Complete the page from Steam",
+  "details.completing": "Looking in the Steam store…",
+  "details.completed": "Page completed from Steam.",
+  "details.nothingToComplete": "Nothing to complete: Steam has nothing more for the empty fields."
 }
