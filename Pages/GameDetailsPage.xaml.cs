@@ -55,6 +55,7 @@ namespace Ludopol
             BuildActions(_game);
             BuildInfo(_game);
             Application.Current.Activated += OnAppActivated;
+            CompleteFromSteam(_game);
         }
 
         /// <summary>Saves my notes if they changed.</summary>
@@ -78,6 +79,32 @@ namespace Ludopol
             {
                 _game.Notes = notes;
                 App.Database.SaveUserFields(_game);
+            }
+        }
+
+        /// <summary>
+        /// A Steam game without a description (added from Steam): its description, tags… are
+        /// fetched from the Steam store, and the page is redrawn when they arrive.
+        /// </summary>
+        private async void CompleteFromSteam(Game game)
+        {
+            if (!SteamStore.NeedsDetails(game))
+            {
+                return;
+            }
+            try
+            {
+                if (await SteamStore.CompleteAsync(game, App.Database) && _game == game && IsLoaded)
+                {
+                    ShowImage(game);
+                    double offset = Scroll.Viewer.VerticalOffset;
+                    BuildInfo(game);
+                    Scroll.Viewer.ScrollToVerticalOffset(offset);
+                }
+            }
+            catch (Exception ex)
+            {
+                App.Log("Steam store: \"" + game.Name + "\" not completed: " + ex.Message);
             }
         }
 

@@ -87,10 +87,15 @@ namespace Ludopol
 
         public UIElement? SideContent => null;
 
-        public void OnShown() => Build();
+        public void OnShown()
+        {
+            SteamStore.StatusChanged += Build;
+            Build();
+        }
 
         public void OnLeaving()
         {
+            SteamStore.StatusChanged -= Build;
             _importSummary = null;
             _installedSummary = null;
             _steamSummary = null;
@@ -329,6 +334,20 @@ namespace Ludopol
                 see.Click += (s, e) => MainWindow.Current.Navigate(new SettingsPage(SettingsSection.SteamMissing));
                 Info.Children.Add(new WrapPanel { Children = { see } });
             }
+
+            // Description, tags… of the Steam games that have none (Data/SteamStore.cs).
+            TileButton complete = new TileButton
+            {
+                Content = Texts.Get(SteamStore.Running ? "steamStore.running" : "steamStore.completeAll"),
+                IsEnabled = !SteamStore.Running,
+            };
+            complete.SetResourceReference(WidthProperty, "WideButtonWidth");
+            complete.Click += (s, e) => _ = SteamStore.CompleteAllAsync(App.Database);
+            Info.Children.Add(new WrapPanel { Children = { complete } });
+            if (SteamStore.Status != null)
+            {
+                AddText(SteamStore.Status, muted: false);
+            }
         }
 
         /// <summary>
@@ -428,6 +447,8 @@ namespace Ludopol
             {
                 int added = SteamSync.AddMissing(games, App.Database);
                 GameLauncher.RefreshAll(App.Database);   // some of them may be installed
+                // Their description, tags… from the Steam store, in the background.
+                _ = SteamStore.CompleteAllAsync(App.Database);
                 _steamSummary = games.Count == 1
                     ? Texts.Format("steamSync.addedOne", games[0].Name, Texts.Get("steamSync.newCategory"))
                     : Texts.Format("steamSync.added", added, Texts.Get("steamSync.newCategory"));

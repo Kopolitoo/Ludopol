@@ -130,5 +130,10 @@
   "settings.theme.system": "As Windows",
   "details.steamStore": "See the game in the Steam store",
   "home.search": "Search for a game",
-  "search.clear": "Clear"
+  "search.clear": "Clear",
+  "steamStore.completeAll": "Complete the pages from the Steam store",
+  "steamStore.running": "Completing the pages…",
+  "steamStore.progress": "Pages completed from Steam: {0} of {1}… (Ludopol can be used meanwhile)",
+  "steamStore.done": "{0} pages completed from Steam out of {1}.",
+  "steamStore.free": "Free"
 }

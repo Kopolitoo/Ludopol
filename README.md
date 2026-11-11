@@ -64,6 +64,12 @@ achetés est demandée à Steam par Internet, dans Paramètres → « Bibliothè
    dans la catégorie « À trier (Steam) ». Un import de
    la feuille complète ensuite ceux qui y sont.
 
+Les jeux ajoutés depuis Steam sont ensuite complétés depuis le magasin Steam, en arrière-plan
+(environ 1,5 s par jeu) : description, développeur, date, genres, prix, français et tags. Seuls
+les champs vides sont remplis ; la catégorie reste « À trier (Steam) ». Le bouton « Compléter
+les fiches depuis le magasin Steam » relance cela pour tous les jeux Steam sans description, et
+la fiche d'un tel jeu se complète aussi à son ouverture.
+
 Si Steam ne donne pas la liste : dans Steam, Profil → Modifier le profil → Confidentialité,
 mettre « Détails des jeux » sur Public.
 

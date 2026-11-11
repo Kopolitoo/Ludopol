@@ -130,5 +130,10 @@
   "settings.theme.system": "Comme Windows",
   "details.steamStore": "Voir le jeu sur le magasin Steam",
   "home.search": "Rechercher un jeu",
-  "search.clear": "Effacer"
+  "search.clear": "Effacer",
+  "steamStore.completeAll": "Compléter les fiches depuis le magasin Steam",
+  "steamStore.running": "Fiches en cours de complétion…",
+  "steamStore.progress": "Fiches complétées depuis Steam : {0} sur {1}… (on peut continuer à utiliser Ludopol)",
+  "steamStore.done": "{0} fiches complétées depuis Steam sur {1}.",
+  "steamStore.free": "Gratuit"
 }
