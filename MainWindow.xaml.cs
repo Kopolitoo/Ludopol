@@ -57,6 +57,11 @@ namespace Ludopol
         {
             // In a text field (the search), the keys write and move the cursor; only
             // Page Up / Page Down still scroll the page.
+            // A Windows Forms field (the notes for Dragon) keeps every key.
+            if (System.Windows.Input.Keyboard.FocusedElement is System.Windows.Forms.Integration.WindowsFormsHost)
+            {
+                return;
+            }
             if (System.Windows.Input.Keyboard.FocusedElement is TextBox
                 && e.Key != System.Windows.Input.Key.PageUp && e.Key != System.Windows.Input.Key.PageDown)
             {
