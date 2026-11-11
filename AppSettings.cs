@@ -142,9 +142,13 @@ namespace Ludopol
         {
             resources["TileWidth"] = TileWidth;
             resources["TileHeight"] = TileHeight;
+            // A tile and its margins: the smallest column of the tile grids (Ui/TileGrid.cs).
+            resources["TileSlotWidth"] = TileWidth + Spacing;
             resources["ButtonMinSize"] = ButtonMinSize;
             resources["WideButtonWidth"] = ButtonMinSize * 2;
             resources["SideButtonWidth"] = Math.Round(ButtonMinSize * 1.4);
+            // The left navigation column: one side button and its margins, as wide as the filter column.
+            resources["SideColumnWidth"] = Math.Round(ButtonMinSize * 1.4) + Spacing;
             resources["TileImageHeight"] = Math.Round(TileHeight * 0.6);
             resources["BaseFontSize"] = FontSize;
             resources["SmallFontSize"] = Math.Round(FontSize * 0.75);

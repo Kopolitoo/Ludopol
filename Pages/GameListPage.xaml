@@ -15,12 +15,12 @@
             <ItemsControl x:Name="Games">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <WrapPanel />
+                        <local:TileGrid ItemMinWidth="{DynamicResource TileSlotWidth}" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <local:TileButton Width="{DynamicResource TileWidth}" Padding="10" Click="OnGameClick"
+                        <local:TileButton Padding="10" Click="OnGameClick"
                                           HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top">
                             <StackPanel>
                                 <Grid Height="{DynamicResource TileImageHeight}" ClipToBounds="True">

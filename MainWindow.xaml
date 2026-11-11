@@ -27,7 +27,7 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <Grid Width="{DynamicResource SideButtonWidth}">
+            <Grid Width="{DynamicResource SideColumnWidth}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
