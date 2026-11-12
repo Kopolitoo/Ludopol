@@ -66,6 +66,11 @@ namespace Ludopol
         /// <summary>When the game was added to the catalogue ("Recently added").</summary>
         public DateTime AddedAt { get; set; } = DateTime.Now;
 
+        /// <summary>The price shown on the tile: none for a game I own (it costs me nothing more).</summary>
+        public string? ShownPrice => OwnedOnSteam || string.IsNullOrWhiteSpace(Price) ? null : Price;
+
+        public bool HasShownPrice => ShownPrice != null;
+
         /// <summary>One or two letters shown on the tile when there is no image.</summary>
         public string Initials
         {

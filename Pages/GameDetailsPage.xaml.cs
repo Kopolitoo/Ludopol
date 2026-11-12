@@ -438,7 +438,8 @@ namespace Ludopol
             // First line: date, price and, for a game I own on Steam, Steam's logo with a green
             // tick (only information: "owned" is updated by the synchronisation, in the settings).
             WrapPanel top = new WrapPanel { Margin = new Thickness(12, 6, 12, 0) };
-            string dateAndPrice = string.Join("  ·  ", NonEmpty(game.ReleaseDate, game.Price));
+            // No price for a game I own: it costs me nothing more.
+            string dateAndPrice = string.Join("  ·  ", NonEmpty(game.ReleaseDate, game.OwnedOnSteam ? null : game.Price));
             if (dateAndPrice.Length > 0)
             {
                 TextBlock line = new TextBlock { Text = dateAndPrice, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 16, 0) };
@@ -464,7 +465,12 @@ namespace Ludopol
             }
             if (!string.IsNullOrWhiteSpace(game.Developer))
             {
-                LinkRow("details.developer", new[] { game.Developer }, name => new GameFilter { Developer = name });
+                // The developer's button gives its number of games: "Nicalis (4)".
+                WrapPanel developer = LabelRow("details.developer");
+                string name = game.Developer;
+                int count = App.Database.GetGames(new GameFilter { Developer = name }).Count;
+                developer.Children.Add(SmallButton(Texts.Format("list.titleCount", name, count),
+                    () => MainWindow.Current.Navigate(new GameListPage(new GameFilter { Developer = name }, name))));
             }
 
             // --- What I note: one row ---

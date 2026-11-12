@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -30,6 +31,10 @@ namespace Ludopol
         private readonly TileButton _categoryFilter = new TileButton();
         private readonly TileButton _compatibilityFilter = new TileButton();
         private readonly TileButton _ratingFilter = new TileButton();
+
+        /// <summary>Below the filters: adds categories to every game of the list (batch editing).</summary>
+        private readonly TileButton _addCategoryButton = new TileButton();
+        private List<Game> _shown = new List<Game>();
 
         /// <summary>Right of the title: the sort criterion (a menu) and the direction (a toggle).</summary>
         private readonly StackPanel _sortButtons = new StackPanel { Orientation = Orientation.Horizontal };
@@ -76,6 +81,12 @@ namespace Ludopol
             _compatibilityFilter.Click += OnCompatibilityFilterClick;
             _ratingFilter.Click += OnRatingFilterClick;
 
+            _addCategoryButton.SetResourceReference(WidthProperty, "SideButtonWidth");
+            _addCategoryButton.SetResourceReference(FontSizeProperty, "SmallFontSize");
+            _addCategoryButton.Margin = new Thickness(12, 36, 12, 12);   // apart from the filters
+            _addCategoryButton.Click += OnAddCategoryClick;
+            _filters.Children.Add(_addCategoryButton);
+
             foreach (TileButton button in new[] { _sortByButton, _sortOrderButton })
             {
                 button.SetResourceReference(WidthProperty, "SideButtonWidth");
@@ -117,10 +128,41 @@ namespace Ludopol
         private void ShowGames()
         {
             List<Game> games = App.Database.GetGames(_filter);
+            _shown = games;
+            _addCategoryButton.Content = Texts.Format("batch.addCategory", games.Count);
+            _addCategoryButton.IsEnabled = games.Count > 0;
             Games.ItemsSource = games;
             EmptyText.Visibility = games.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             _count = games.Count;
             MainWindow.Current.RefreshTitle();
+        }
+
+        // ----- Batch editing -----
+
+        /// <summary>
+        /// Gives one or more categories to all the games shown (for example every game with the
+        /// tag "FPS": open the tag, filter if needed, then this button). Nothing is taken away,
+        /// except "To sort (Steam)" once a real category is given.
+        /// </summary>
+        private void OnAddCategoryClick(object sender, RoutedEventArgs e)
+        {
+            List<Game> games = _shown;
+            if (games.Count == 0)
+            {
+                return;
+            }
+            string toSort = Texts.Get("steamSync.newCategory");
+            List<string> names = App.Database.GetCategories().Select(c => c.Name).Where(n => n != toSort).ToList();
+            ChoiceMenu.ShowSeveral(Texts.Format("batch.title", games.Count), names, new List<string>(), chosen =>
+            {
+                chosen.Remove(toSort);
+                if (chosen.Count == 0)
+                {
+                    return;
+                }
+                App.Database.AddCategories(games.Select(g => g.Id), chosen, toSort);
+                ApplyFilter();
+            });
         }
 
         // ----- Sort -----

@@ -168,5 +168,7 @@
   "details.steamLink.question": "Steam page of \"{0}\"",
   "details.steamLink.hint": "Type or paste the address of the game's Steam store page (https://store.steampowered.com/app/…), or only its number.",
   "details.steamLink.ok": "Use this page",
-  "details.steamLink.invalid": "No Steam number found in this text. Copy the address of the game's page in the Steam store."
+  "details.steamLink.invalid": "No Steam number found in this text. Copy the address of the game's page in the Steam store.",
+  "batch.addCategory": "Add a category to these {0} games",
+  "batch.title": "Categories to add to the {0} games of this list"
 }

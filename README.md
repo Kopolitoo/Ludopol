@@ -87,7 +87,16 @@ réduit à chaque lettre, sans tenir compte des majuscules ni des accents.
 Le titre d'une liste donne son nombre de jeux, par exemple « Tous les jeux (316) ». À droite du
 titre, « Tri : … » ouvre le choix du critère (nom, date d'ajout, note, compatibilité) et le
 bouton voisin inverse le sens (A → Z / Z → A, plus récents d'abord…). Les jeux sans note
-restent à la fin. Les pages Catégories, Tags et Développeurs ont aussi leur nombre et leur tri
+restent à la fin. Sur les cartes, une coche verte en haut à droite marque un jeu possédé sur
+Steam ; un jeu non possédé montre son prix en bas à droite (un jeu possédé n'a pas de prix : il ne
+coûte plus rien).
+
+**Édition par lot** : sous les filtres, « Ajouter une catégorie à ces N jeux » donne une ou
+plusieurs catégories (existantes ou nouvelles) à tous les jeux affichés. Par exemple, pour classer
+en FPS tous les jeux qui ont le tag FPS : Accueil → Tags → FPS, filtrer si besoin, puis ce bouton.
+Rien n'est retiré, sauf « À trier (Steam) » quand une vraie catégorie est donnée.
+
+Les pages Catégories, Tags et Développeurs ont aussi leur nombre et leur tri
 (par nom ou par nombre de jeux ; les tags commencent par les plus utilisés).
 
 Partout où le contenu défile, un grand ascenseur à droite montre où l'on est dans la page : une
@@ -111,7 +120,8 @@ sur Steam a « Voir le jeu sur le magasin Steam » (page dans Steam, ou dans le 
 Steam). « Choisir le programme du jeu… » n'est proposé que pour un jeu non possédé sur Steam.
 
 La fiche est faite pour tenir sur un écran : petits boutons, nom de chaque rangée en début de
-ligne, « Testé » et « À publier » en interrupteurs. Un jeu possédé sur Steam montre le logo Steam
+ligne, « Testé » et « À publier » en interrupteurs, le nombre de jeux du développeur sur son
+bouton. Pas de prix pour un jeu possédé. Un jeu possédé sur Steam montre le logo Steam
 avec une coche verte : c'est une information, mise à jour par la synchronisation (Paramètres →
 Steam).
 

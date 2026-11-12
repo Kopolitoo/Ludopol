@@ -548,6 +548,49 @@ namespace Ludopol
             return simple.ToString().Normalize(NormalizationForm.FormC);
         }
 
+        /// <summary>
+        /// Adds categories to many games at once (the games of a list). A game that already has
+        /// one keeps it once. removeName (the category "To sort (Steam)"), when given, is taken
+        /// off these games. Returns how many games got at least one new category.
+        /// </summary>
+        public int AddCategories(IEnumerable<long> gameIds, IReadOnlyCollection<string> names, string? removeName)
+        {
+            int changed = 0;
+            using (SqliteConnection connection = Connect())
+            using (SqliteTransaction transaction = connection.BeginTransaction())
+            {
+                foreach (long id in gameIds.Distinct())
+                {
+                    int added = 0;
+                    foreach (string name in names.Distinct())
+                    {
+                        SqliteCommand insert = connection.CreateCommand();
+                        insert.Transaction = transaction;
+                        insert.CommandText = "INSERT OR IGNORE INTO game_categories (game_id, name) VALUES ($id, $name)";
+                        insert.Parameters.AddWithValue("$id", id);
+                        insert.Parameters.AddWithValue("$name", name);
+                        added += insert.ExecuteNonQuery();
+                    }
+                    if (removeName != null)
+                    {
+                        SqliteCommand remove = connection.CreateCommand();
+                        remove.Transaction = transaction;
+                        remove.CommandText = "DELETE FROM game_categories WHERE game_id = $id AND name = $name";
+                        remove.Parameters.AddWithValue("$id", id);
+                        remove.Parameters.AddWithValue("$name", removeName);
+                        remove.ExecuteNonQuery();
+                    }
+                    if (added > 0)
+                    {
+                        changed++;
+                    }
+                }
+                transaction.Commit();
+            }
+            App.Log("Categories " + string.Join(", ", names) + " added to " + changed + " games");
+            return changed;
+        }
+
         /// <summary>Writes a game's categories and tags (tags in Steam's order).</summary>
         private static void InsertNames(SqliteConnection connection, SqliteTransaction transaction, Game game)
         {
