@@ -218,6 +218,79 @@ namespace Ludopol
             }
         }
 
+        // ----- The game's image -----
+
+        private void ShowImageMenu(Game game)
+        {
+            List<MenuChoice> choices = new List<MenuChoice>
+            {
+                new MenuChoice(Texts.Get("details.image.file"), false, () => ChooseImageFile(game)),
+                new MenuChoice(Texts.Get("details.image.address"), false, () =>
+                    ChoiceMenu.ShowText(Texts.Format("details.image.addressTitle", game.Name),
+                        game.ImageUrl != null && game.ImageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? game.ImageUrl : "",
+                        Texts.Get("details.image.use"), address =>
+                        {
+                            if (Uri.TryCreate(address, UriKind.Absolute, out Uri? uri)
+                                && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+                            {
+                                SetImage(game, uri.ToString());
+                            }
+                        })),
+            };
+            if (game.SteamAppId.HasValue)
+            {
+                choices.Add(new MenuChoice(Texts.Get("details.image.steam"), false, () => SetImage(game,
+                    "https://cdn.cloudflare.steamstatic.com/steam/apps/"
+                    + game.SteamAppId.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) + "/header.jpg")));
+            }
+            ChoiceMenu.Show(Texts.Get("details.image.change"), choices, () => { });
+        }
+
+        /// <summary>
+        /// An image file of mine: copied into Ludopol's folder (Images), so that it stays even
+        /// if the original moves. A new name each time: Windows would otherwise show the old one.
+        /// </summary>
+        private void ChooseImageFile(Game game)
+        {
+            Microsoft.Win32.OpenFileDialog dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = Texts.Get("details.image.file"),
+                Filter = Texts.Get("details.image.filter") + " (*.png, *.jpg, *.jpeg, *.bmp, *.gif)|*.png;*.jpg;*.jpeg;*.bmp;*.gif",
+            };
+            if (dialog.ShowDialog(Window.GetWindow(this)) != true)
+            {
+                return;
+            }
+            try
+            {
+                string folder = System.IO.Path.Combine(App.DataFolder, "Images");
+                System.IO.Directory.CreateDirectory(folder);
+                string prefix = "game-" + game.Id.ToString(System.Globalization.CultureInfo.InvariantCulture) + "-";
+                foreach (string old in System.IO.Directory.GetFiles(folder, prefix + "*"))
+                {
+                    System.IO.File.Delete(old);
+                }
+                string copy = System.IO.Path.Combine(folder, prefix + DateTime.Now.Ticks.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                    + System.IO.Path.GetExtension(dialog.FileName).ToLowerInvariant());
+                System.IO.File.Copy(dialog.FileName, copy);
+                SetImage(game, copy);
+            }
+            catch (Exception ex)
+            {
+                App.Log("Image not copied for \"" + game.Name + "\": " + ex);
+                _actionMessage = Texts.Format("play.error", ex.Message);
+                BuildActions(game);
+            }
+        }
+
+        private void SetImage(Game game, string image)
+        {
+            game.ImageUrl = image;
+            App.Database.UpdateFromImport(game);
+            App.Log("Image of \"" + game.Name + "\": " + image);
+            ShowImage(game);
+        }
+
         // ----- Play, install, choose the program -----
 
         /// <summary>Ludopol is back in front: the game may have been installed or removed meanwhile.</summary>
@@ -298,6 +371,11 @@ namespace Ludopol
             TileButton link = AddAction(game.SteamAppId.HasValue ? "details.steamLink.change" : "details.steamLink.add");
             link.SetResourceReference(FontSizeProperty, "SmallFontSize");
             link.Click += (s, e) => ShowSteamLink(game);
+
+            // The image: a file of mine, an Internet address, or Steam's.
+            TileButton image = AddAction("details.image.change");
+            image.SetResourceReference(FontSizeProperty, "SmallFontSize");
+            image.Click += (s, e) => ShowImageMenu(game);
 
             // Choosing a program is for games outside Steam: not offered for a game bought on
             // Steam (a program already chosen can still be removed).

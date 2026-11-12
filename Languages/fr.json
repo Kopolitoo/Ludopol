@@ -176,5 +176,14 @@
   "category.rename.ok": "Renommer",
   "category.delete": "Supprimer cette catégorie",
   "category.delete.question": "Supprimer la catégorie « {0} » ? Ses {1} jeux restent dans le catalogue, sans cette catégorie.",
-  "category.delete.confirm": "Supprimer"
+  "category.delete.confirm": "Supprimer",
+  "details.image.change": "Changer l'image…",
+  "details.image.file": "Un fichier image…",
+  "details.image.filter": "Image",
+  "details.image.address": "L'adresse d'une image (Internet)…",
+  "details.image.addressTitle": "Adresse d'une image pour « {0} »",
+  "details.image.use": "Utiliser cette image",
+  "details.image.steam": "L'image de Steam",
+  "category.image": "Choisir l'image de la catégorie",
+  "category.image.pick": "Touchez le jeu dont prendre l'image (ou ici pour arrêter)"
 }

@@ -48,6 +48,10 @@ namespace Ludopol
         /// <summary>The category this list was opened for (it can be renamed or deleted here), or null.</summary>
         private string? _ownCategory;
 
+        /// <summary>"Choose the category's image": while it is on (blue), touching a game takes its image.</summary>
+        private readonly TileButton _pickImageButton = new TileButton();
+        private bool _pickingImage;
+
         private readonly bool _searchMode;
 
         /// <summary>A list of games. searchMode: the search page, with a field for the title above the tiles.</summary>
@@ -94,13 +98,14 @@ namespace Ludopol
             _ownCategory = filter.Category;
             if (_ownCategory != null)
             {
-                foreach ((string key, RoutedEventHandler click) in new (string, RoutedEventHandler)[]
+                foreach ((TileButton button, string key, RoutedEventHandler click) in new (TileButton, string, RoutedEventHandler)[]
                 {
-                    ("category.rename", OnRenameCategoryClick),
-                    ("category.delete", OnDeleteCategoryClick),
+                    (new TileButton(), "category.rename", OnRenameCategoryClick),
+                    (_pickImageButton, "category.image", OnPickImageClick),
+                    (new TileButton(), "category.delete", OnDeleteCategoryClick),
                 })
                 {
-                    TileButton button = new TileButton { Content = Texts.Get(key) };
+                    button.Content = Texts.Get(key);
                     button.SetResourceReference(WidthProperty, "SideButtonWidth");
                     button.SetResourceReference(FontSizeProperty, "SmallFontSize");
                     button.Click += click;
@@ -208,6 +213,15 @@ namespace Ludopol
             });
         }
 
+        private void OnPickImageClick(object sender, RoutedEventArgs e) => SetPickingImage(!_pickingImage);
+
+        private void SetPickingImage(bool on)
+        {
+            _pickingImage = on;
+            _pickImageButton.IsSelected = on;
+            _pickImageButton.Content = Texts.Get(on ? "category.image.pick" : "category.image");
+        }
+
         private void OnDeleteCategoryClick(object sender, RoutedEventArgs e)
         {
             if (_ownCategory is not string name)
@@ -279,14 +293,26 @@ namespace Ludopol
         public void OnLeaving()
         {
             ChoiceMenu.Hide();
+            SetPickingImage(false);
         }
 
         private void OnGameClick(object sender, RoutedEventArgs e)
         {
-            if (((FrameworkElement)sender).DataContext is Game game)
+            if (((FrameworkElement)sender).DataContext is not Game game)
             {
-                MainWindow.Current.Navigate(new GameDetailsPage(game.Id));
+                return;
             }
+            if (_pickingImage && _ownCategory != null)
+            {
+                // Choosing the category's image: a game without an image changes nothing.
+                if (!string.IsNullOrWhiteSpace(game.ImageUrl))
+                {
+                    App.Database.SetCategoryImage(_ownCategory, game.ImageUrl);
+                    SetPickingImage(false);
+                }
+                return;
+            }
+            MainWindow.Current.Navigate(new GameDetailsPage(game.Id));
         }
 
         // ----- Filters -----

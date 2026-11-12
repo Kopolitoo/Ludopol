@@ -176,5 +176,14 @@
   "category.rename.ok": "Rename",
   "category.delete": "Delete this category",
   "category.delete.question": "Delete the category \"{0}\"? Its {1} games stay in the catalogue, without this category.",
-  "category.delete.confirm": "Delete"
+  "category.delete.confirm": "Delete",
+  "details.image.change": "Change the image…",
+  "details.image.file": "An image file…",
+  "details.image.filter": "Image",
+  "details.image.address": "An image address (Internet)…",
+  "details.image.addressTitle": "Address of an image for \"{0}\"",
+  "details.image.use": "Use this image",
+  "details.image.steam": "Steam's image",
+  "category.image": "Choose the category's image",
+  "category.image.pick": "Touch the game whose image to take (or here to stop)"
 }

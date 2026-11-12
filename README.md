@@ -99,7 +99,9 @@ Rien n'est retiré, sauf « À trier (Steam) » quand une vraie catégorie est d
 **Renommer ou supprimer une catégorie** : ouvrir la catégorie (Accueil → Catégories), puis
 « Renommer cette catégorie » ou « Supprimer cette catégorie » sous les filtres. Renommer avec le
 nom d'une catégorie existante réunit les deux. Supprimer retire la catégorie de ses jeux, qui
-restent dans le catalogue. Une image personnelle (dossier Categories) n'est pas renommée avec la
+restent dans le catalogue. « Choisir l'image de la catégorie » passe le
+bouton en bleu : toucher ensuite un jeu de la liste donne son image à la carte de la catégorie.
+Une image personnelle du dossier Categories reste prioritaire, et n'est pas renommée avec la
 catégorie. Attention : réimporter la feuille remet les catégories de la feuille.
 
 Les pages Catégories, Tags et Développeurs ont aussi leur nombre et leur tri
@@ -130,6 +132,9 @@ ligne, « Testé » et « À publier » en interrupteurs, le nombre de jeux du d
 bouton. Pas de prix pour un jeu possédé. Un jeu possédé sur Steam montre le logo Steam
 avec une coche verte : c'est une information, mise à jour par la synchronisation (Paramètres →
 Steam).
+
+« Changer l'image… » (sous l'image de la fiche) propose un fichier image (copié dans le dossier
+Images de Ludopol), l'adresse d'une image sur Internet, ou l'image de Steam pour un jeu lié à Steam.
 
 « Lier à une page Steam… » (ou « Changer la page Steam… ») demande l'adresse de la page du jeu
 sur le magasin Steam, ou son numéro : utile pour un jeu « Introuvable » ou lié à la mauvaise
