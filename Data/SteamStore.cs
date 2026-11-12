@@ -167,6 +167,54 @@ namespace Ludopol
             }
         }
 
+        /// <summary>
+        /// The Steam number written in an address or alone: "https://store.steampowered.com/app/470780/She_…",
+        /// "steam://store/470780", "470780". Null when none is found.
+        /// </summary>
+        public static long? ParseAppId(string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return null;
+            }
+            Match match = Regex.Match(text.Trim(), @"^(\d+)$|/app/(\d+)|steam://\w+/(\d+)", RegexOptions.IgnoreCase);
+            if (!match.Success)
+            {
+                return null;
+            }
+            string digits = match.Groups[1].Success ? match.Groups[1].Value
+                : match.Groups[2].Success ? match.Groups[2].Value : match.Groups[3].Value;
+            return long.TryParse(digits, NumberStyles.None, CultureInfo.InvariantCulture, out long id) && id > 0 ? id : null;
+        }
+
+        /// <summary>
+        /// Gives a game another Steam number (typed by hand): what came from the previous Steam
+        /// page (description, tags, image…) is removed, so that CompleteAsync fills everything
+        /// again from the new one. My own fields (categories, notes, rating…) stay.
+        /// </summary>
+        public static void ChangeAppId(Game game, long appId, Database database)
+        {
+            if (game.SteamAppId != appId)
+            {
+                game.Description = null;
+                game.ReleaseDate = null;
+                game.Developer = null;
+                game.Genres = null;
+                game.Price = null;
+                game.French = null;
+                game.Tags = new List<string>();
+                game.OwnedOnSteam = false;   // known again at the next synchronisation
+            }
+            if (game.SteamAppId != appId || string.IsNullOrWhiteSpace(game.ImageUrl))
+            {
+                game.ImageUrl = "https://cdn.cloudflare.steamstatic.com/steam/apps/"
+                                + appId.ToString(CultureInfo.InvariantCulture) + "/header.jpg";
+            }
+            game.SteamAppId = appId;
+            database.UpdateFromImport(game);
+            App.Log("Steam number of \"" + game.Name + "\" set by hand: " + appId);
+        }
+
         /// <summary>The tags of a store page: the links with the class "app_tag", in Steam's order.</summary>
         public static List<string> ReadTags(string html)
         {

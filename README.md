@@ -23,7 +23,7 @@ et les images.
   Date de sortie, Développeur, Genres, Tags Steam, Prix, Français (et « Possédé sur Steam » si
   la colonne existe).
 - La feuille liste des jeux réputés jouables au regard : un jeu sans compatibilité dans la
-  feuille devient « Supposée (pas encore essayée) » (jauge bleu-gris). Réimporter la feuille
+  feuille devient « Supposée » (pas encore testée ; jauge bleu-gris). Réimporter la feuille
   l'applique aussi aux jeux déjà importés restés « Inconnue ».
 - Réimporter met à jour les données Steam, les catégories et les tags, mais ne remplace jamais
   ce qui a été rempli dans Ludopol (note, compatibilité, essayé, remarques, à publier, possédé).
@@ -90,8 +90,10 @@ bouton voisin inverse le sens (A → Z / Z → A, plus récents d'abord…). Les
 restent à la fin. Les pages Catégories, Tags et Développeurs ont aussi leur nombre et leur tri
 (par nom ou par nombre de jeux ; les tags commencent par les plus utilisés).
 
-Partout où le contenu défile, une fine jauge à droite montre où l'on est dans la page, et le
-clavier fonctionne : Page suivante / Espace, Page précédente, Début, Fin, flèches haut et bas.
+Partout où le contenu défile, un grand ascenseur à droite montre où l'on est dans la page : une
+petite flèche à chaque bout (un écran à la fois, en continu tant que le regard reste dessus), un
+clic au-dessus ou au-dessous du curseur pour sauter d'un écran, et le curseur se fait glisser. Le
+défilement de Prunel (molette) marche partout. Le clavier fonctionne aussi : Page suivante / Espace, Page précédente, Début, Fin, flèches haut et bas.
 La touche Retour arrière fait comme le bouton « Retour ». Pendant la saisie dans un champ (la
 recherche), seules Page suivante et Page précédente font défiler : les autres touches servent au texte.
 
@@ -107,6 +109,17 @@ pour les jeux qui y sont.
 Un jeu Steam pas installé propose « Installer avec Steam » s'il est possédé. Tout jeu présent
 sur Steam a « Voir le jeu sur le magasin Steam » (page dans Steam, ou dans le navigateur sans
 Steam). « Choisir le programme du jeu… » n'est proposé que pour un jeu non possédé sur Steam.
+
+La fiche est faite pour tenir sur un écran : petits boutons, nom de chaque rangée en début de
+ligne, « Testé » et « À publier » en interrupteurs. Un jeu possédé sur Steam montre le logo Steam
+avec une coche verte : c'est une information, mise à jour par la synchronisation (Paramètres →
+Steam).
+
+« Lier à une page Steam… » (ou « Changer la page Steam… ») demande l'adresse de la page du jeu
+sur le magasin Steam, ou son numéro : utile pour un jeu « Introuvable » ou lié à la mauvaise
+page. Le jeu prend ce numéro, ce qui venait de l'ancienne page Steam est effacé (description,
+tags, image…), puis la fiche est complétée depuis le magasin. Mes catégories, notes et remarques
+restent.
 
 ### Mes remarques (dictée Dragon)
 

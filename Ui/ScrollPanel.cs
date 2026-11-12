@@ -5,14 +5,14 @@ using System.Windows.Markup;
 namespace Ludopol
 {
     /// <summary>
-    /// VIEW: a scrolling area with two big buttons on its right, "Up" and "Down", each
-    /// taking half of the height of the screen.
+    /// VIEW: a scrolling area with a big scroll bar on its right: a small arrow button at each
+    /// end and, between them, a wide track whose thumb shows where we are in the page.
     ///
-    /// The area scrolls with the mouse wheel, so with Prunel's scroll mode, with the
-    /// buttons (by most of a screen at a time), and with the keyboard (HandleKey, called by
-    /// the main window: Page Up / Page Down, Home / End, arrows). A button is greyed out when
-    /// there is nothing more to show on its side. The scroll bar itself is hidden, too thin
-    /// for the gaze; a thin gauge on the far right only shows where we are in the page.
+    /// The area scrolls with the mouse wheel (so with Prunel's scroll mode), with the arrows
+    /// (by most of a screen at a time, and on and on while the gaze stays on them), by
+    /// clicking the track above or below the thumb (a screen at a time), by dragging the
+    /// thumb, and with the keyboard (HandleKey, called by the main window: Page Up / Page
+    /// Down, Home / End, arrows). The bar is hidden when everything fits.
     ///
     /// In XAML, the content goes inside: &lt;local:ScrollPanel&gt; … &lt;/local:ScrollPanel&gt;.
     /// </summary>
@@ -22,9 +22,14 @@ namespace Ludopol
         private readonly TileButton _up;
         private readonly TileButton _down;
 
-        /// <summary>The thin position gauge on the right: its track and the part shown on screen.</summary>
-        private readonly Grid _gauge = new Grid { Width = 10, Margin = new Thickness(4, 12, 0, 12) };
-        private readonly Border _thumb = new Border { CornerRadius = new CornerRadius(5), VerticalAlignment = VerticalAlignment.Top };
+        /// <summary>The scroll bar: the arrows and, between them, the track with its thumb.</summary>
+        private readonly Grid _bar = new Grid { Margin = new Thickness(6, 6, 6, 6) };
+        private readonly Grid _track = new Grid { Margin = new Thickness(0, 6, 0, 6) };
+        private readonly Border _thumb = new Border { CornerRadius = new CornerRadius(8), VerticalAlignment = VerticalAlignment.Top };
+
+        /// <summary>While the thumb is dragged: where the pointer took it, and the offset then.</summary>
+        private double? _dragStartY;
+        private double _dragStartOffset;
 
         public ScrollViewer Viewer { get; } = new ScrollViewer
         {
@@ -45,38 +50,89 @@ namespace Ludopol
         {
             ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-
-            SetRowSpan(Viewer, 2);
             Children.Add(Viewer);
 
             // RepeatOnHover: with hover activation, the area goes on scrolling while the cursor
-            // stays on the button.
-            _up = new TileButton { Content = "▲\n" + Texts.Get("scroll.up"), RepeatOnHover = true };
-            _down = new TileButton { Content = "▼\n" + Texts.Get("scroll.down"), RepeatOnHover = true };
-            _up.SetResourceReference(WidthProperty, "SideButtonWidth");
-            _down.SetResourceReference(WidthProperty, "SideButtonWidth");
-            SetColumn(_up, 1);
-            SetColumn(_down, 1);
-            SetRow(_down, 1);
-            Children.Add(_up);
-            Children.Add(_down);
-
+            // stays on the arrow.
+            _up = new TileButton { Content = "▲", RepeatOnHover = true, Padding = new Thickness(0), Margin = new Thickness(0) };
+            _down = new TileButton { Content = "▼", RepeatOnHover = true, Padding = new Thickness(0), Margin = new Thickness(0) };
+            foreach (TileButton arrow in new[] { _up, _down })
+            {
+                arrow.SetResourceReference(WidthProperty, "SmallButtonSize");
+                arrow.SetResourceReference(HeightProperty, "SmallButtonSize");
+                arrow.SetResourceReference(MinWidthProperty, "SmallButtonSize");
+                arrow.SetResourceReference(MinHeightProperty, "SmallButtonSize");
+            }
             _up.Click += (s, e) => ScrollBy(-1);
             _down.Click += (s, e) => ScrollBy(1);
-            Border track = new Border { CornerRadius = new CornerRadius(5) };
-            track.SetResourceReference(Border.BackgroundProperty, "GaugeEmptyBrush");
+
+            _bar.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            _bar.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            _bar.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            Grid.SetRow(_track, 1);
+            Grid.SetRow(_down, 2);
+            _bar.Children.Add(_up);
+            _bar.Children.Add(_track);
+            _bar.Children.Add(_down);
+            SetColumn(_bar, 1);
+            Children.Add(_bar);
+
+            Border trackBack = new Border { CornerRadius = new CornerRadius(8) };
+            trackBack.SetResourceReference(Border.BackgroundProperty, "GaugeEmptyBrush");
             _thumb.SetResourceReference(Border.BackgroundProperty, "MutedTextBrush");
-            _gauge.Children.Add(track);
-            _gauge.Children.Add(_thumb);
-            SetColumn(_gauge, 2);
-            SetRowSpan(_gauge, 2);
-            Children.Add(_gauge);
+            _track.Children.Add(trackBack);
+            _track.Children.Add(_thumb);
+
+            _track.MouseLeftButtonDown += OnTrackDown;
+            _track.MouseMove += OnTrackMove;
+            _track.MouseLeftButtonUp += (s, e) => EndDrag();
+            _track.LostMouseCapture += (s, e) => _dragStartY = null;
 
             Viewer.ScrollChanged += (s, e) => UpdateButtons();
-            _gauge.SizeChanged += (s, e) => UpdateButtons();
+            _track.SizeChanged += (s, e) => UpdateButtons();
+        }
+
+        /// <summary>On the thumb: starts dragging it. Above or below it: a screen up or down.</summary>
+        private void OnTrackDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            double y = e.GetPosition(_track).Y;
+            double top = _thumb.Margin.Top;
+            if (y < top)
+            {
+                ScrollBy(-1);
+            }
+            else if (y > top + _thumb.ActualHeight)
+            {
+                ScrollBy(1);
+            }
+            else
+            {
+                _dragStartY = y;
+                _dragStartOffset = Viewer.VerticalOffset;
+                _track.CaptureMouse();
+            }
+            e.Handled = true;
+        }
+
+        private void OnTrackMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (_dragStartY is not double start)
+            {
+                return;
+            }
+            double free = _track.ActualHeight - _thumb.ActualHeight;
+            if (free <= 0)
+            {
+                return;
+            }
+            double moved = e.GetPosition(_track).Y - start;
+            Viewer.ScrollToVerticalOffset(_dragStartOffset + moved * Viewer.ScrollableHeight / free);
+        }
+
+        private void EndDrag()
+        {
+            _dragStartY = null;
+            _track.ReleaseMouseCapture();
         }
 
         /// <summary>
@@ -125,14 +181,15 @@ namespace Ludopol
             _up.IsEnabled = Viewer.VerticalOffset > 0.5;
             _down.IsEnabled = Viewer.VerticalOffset < Viewer.ScrollableHeight - 0.5;
 
-            // The gauge: hidden when everything fits; otherwise the thumb's height is the part
-            // of the page on screen, and its position where that part is.
+            // Hidden when everything fits (its room is kept, so the content does not jump).
+            // Otherwise the thumb's height is the part of the page on screen, and its
+            // position where that part is.
             bool scrolls = Viewer.ScrollableHeight > 0.5 && Viewer.ExtentHeight > 0;
-            _gauge.Visibility = scrolls ? Visibility.Visible : Visibility.Hidden;
+            _bar.Visibility = scrolls ? Visibility.Visible : Visibility.Hidden;
             if (scrolls)
             {
-                double track = _gauge.ActualHeight;
-                double height = System.Math.Max(20, track * Viewer.ViewportHeight / Viewer.ExtentHeight);
+                double track = _track.ActualHeight;
+                double height = System.Math.Max(40, track * Viewer.ViewportHeight / Viewer.ExtentHeight);
                 _thumb.Height = System.Math.Min(height, track);
                 _thumb.Margin = new Thickness(0, (track - _thumb.Height) * Viewer.VerticalOffset / Viewer.ScrollableHeight, 0, 0);
             }

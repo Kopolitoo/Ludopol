@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace Ludopol
@@ -63,6 +64,7 @@ namespace Ludopol
             Application.Current.Activated -= OnAppActivated;
             PlayPanel.Visibility = Visibility.Collapsed;
             ChoiceMenu.Hide();
+            CloseSteamLink();
             _actionMessage = null;
         }
 
@@ -116,6 +118,104 @@ namespace Ludopol
             double offset = Scroll.Viewer.VerticalOffset;
             BuildInfo(game);
             Scroll.Viewer.ScrollToVerticalOffset(offset);
+        }
+
+        // ----- The Steam page typed by hand -----
+
+        /// <summary>The panel over the page where the Steam address is typed, or null.</summary>
+        private Grid? _steamLinkPanel;
+
+        /// <summary>
+        /// Asks for the game's Steam address (or its number), with Prunel's keyboard, Dragon or
+        /// a paste. Then the game takes that number and its page is filled from the store.
+        /// </summary>
+        private void ShowSteamLink(Game game)
+        {
+            CloseSteamLink();
+            TextBox box = new TextBox
+            {
+                Text = game.SteamAppId.HasValue
+                    ? "https://store.steampowered.com/app/" + game.SteamAppId.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) + "/"
+                    : "",
+                VerticalContentAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(12),
+            };
+            box.SetResourceReference(MinHeightProperty, "SmallButtonSize");
+            TextBlock message = new TextBlock { TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, Margin = new Thickness(12) };
+
+            TileButton ok = new TileButton { Content = Texts.Get("details.steamLink.ok") };
+            TileButton cancel = new TileButton { Content = Texts.Get("filter.menu.cancel") };
+            ok.SetResourceReference(WidthProperty, "WideButtonWidth");
+            cancel.SetResourceReference(WidthProperty, "WideButtonWidth");
+            StackPanel buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center };
+            buttons.Children.Add(ok);
+            buttons.Children.Add(cancel);
+
+            TextBlock question = new TextBlock
+            {
+                Text = Texts.Format("details.steamLink.question", game.Name),
+                TextWrapping = TextWrapping.Wrap,
+                TextAlignment = TextAlignment.Center,
+                Margin = new Thickness(12),
+            };
+            question.SetResourceReference(TextBlock.FontSizeProperty, "TitleFontSize");
+            TextBlock hint = new TextBlock
+            {
+                Text = Texts.Get("details.steamLink.hint"),
+                TextWrapping = TextWrapping.Wrap,
+                TextAlignment = TextAlignment.Center,
+                Margin = new Thickness(12, 0, 12, 0),
+            };
+            hint.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
+
+            StackPanel content = new StackPanel { VerticalAlignment = VerticalAlignment.Center, MaxWidth = 1600, Margin = new Thickness(24) };
+            content.Children.Add(question);
+            content.Children.Add(hint);
+            content.Children.Add(box);
+            content.Children.Add(message);
+            content.Children.Add(buttons);
+            _steamLinkPanel = new Grid { Children = { content } };
+            _steamLinkPanel.SetResourceReference(Panel.BackgroundProperty, "OverlayBrush");
+            ((Grid)Content).Children.Add(_steamLinkPanel);
+
+            void Validate()
+            {
+                long? appId = SteamStore.ParseAppId(box.Text);
+                if (appId == null)
+                {
+                    message.Text = Texts.Get("details.steamLink.invalid");
+                    return;
+                }
+                CloseSteamLink();
+                SteamStore.ChangeAppId(game, appId.Value, App.Database);
+                ShowImage(game);
+                CheckInstalled();
+                CompleteFromSteamNow(game);   // fills the page from the store, then redraws it
+            }
+            ok.Click += (s, e) => Validate();
+            cancel.Click += (s, e) => CloseSteamLink();
+            box.KeyDown += (s, e) =>
+            {
+                if (e.Key == System.Windows.Input.Key.Enter)
+                {
+                    Validate();
+                }
+            };
+            // Ready for Prunel's keyboard, Dragon or a paste, the text selected to be replaced.
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                System.Windows.Input.Keyboard.Focus(box);
+                box.SelectAll();
+            }), System.Windows.Threading.DispatcherPriority.Input);
+        }
+
+        private void CloseSteamLink()
+        {
+            if (_steamLinkPanel != null)
+            {
+                ((Grid)Content).Children.Remove(_steamLinkPanel);
+                _steamLinkPanel = null;
+            }
         }
 
         // ----- Play, install, choose the program -----
@@ -192,6 +292,12 @@ namespace Ludopol
                 complete.SetResourceReference(FontSizeProperty, "SmallFontSize");
                 complete.Click += (s, e) => CompleteFromSteamNow(game);
             }
+
+            // The Steam page typed by hand: for a game not found on Steam, or linked to the
+            // wrong page.
+            TileButton link = AddAction(game.SteamAppId.HasValue ? "details.steamLink.change" : "details.steamLink.add");
+            link.SetResourceReference(FontSizeProperty, "SmallFontSize");
+            link.Click += (s, e) => ShowSteamLink(game);
 
             // Choosing a program is for games outside Steam: not offered for a game bought on
             // Steam (a program already chosen can still be removed).
@@ -320,36 +426,52 @@ namespace Ludopol
             }
         }
 
+        /// <summary>
+        /// The right part, made to fit on one screen: small buttons, each name of a row
+        /// written at its start rather than as a title above it, yes/no fields as switches.
+        /// </summary>
         private void BuildInfo(Game game)
         {
             Info.Children.Clear();
 
             // --- What Steam says about the game ---
-            AddLine(string.Join("  ·  ", NonEmpty(game.ReleaseDate, game.Price)), muted: true);
+            // First line: date, price and, for a game I own on Steam, Steam's logo with a green
+            // tick (only information: "owned" is updated by the synchronisation, in the settings).
+            WrapPanel top = new WrapPanel { Margin = new Thickness(12, 6, 12, 0) };
+            string dateAndPrice = string.Join("  ·  ", NonEmpty(game.ReleaseDate, game.Price));
+            if (dateAndPrice.Length > 0)
+            {
+                TextBlock line = new TextBlock { Text = dateAndPrice, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 16, 0) };
+                line.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
+                top.Children.Add(line);
+            }
+            if (game.OwnedOnSteam)
+            {
+                top.Children.Add(SteamBadge());
+            }
+            if (top.Children.Count > 0)
+            {
+                Info.Children.Add(top);
+            }
             AddLine(game.Description ?? Texts.Get("details.noDescription"));
+
             // Categories, tags and developer are buttons: each one opens the list of its games.
-            // Categories: always shown, with "Change the categories" at the end of the row.
-            AddTitle("details.categories");
-            AddLinks(game.Categories, name => new GameFilter { Category = name });
-            TileButton editCategories = MenuButton(Texts.Get("details.editCategories"), EditCategories);
-            ((WrapPanel)Info.Children[Info.Children.Count - 1]).Children.Add(editCategories);
+            WrapPanel categories = LinkRow("details.categories", game.Categories, name => new GameFilter { Category = name });
+            categories.Children.Add(SmallButton(Texts.Get("details.editCategories"), EditCategories));
             if (game.Tags.Count > 0)
             {
-                AddTitle("details.tags");
-                AddLinks(game.Tags, name => new GameFilter { Tag = name }, small: true);
+                LinkRow("details.tags", game.Tags, name => new GameFilter { Tag = name });
             }
             if (!string.IsNullOrWhiteSpace(game.Developer))
             {
-                AddTitle("details.developer");
-                AddLinks(new[] { game.Developer }, name => new GameFilter { Developer = name });
+                LinkRow("details.developer", new[] { game.Developer }, name => new GameFilter { Developer = name });
             }
 
-            // --- What I note: one row of buttons ---
-            // Yes/no fields switch at each activation (blue = yes); compatibility and rating
-            // open a menu (Ui/ChoiceMenu.cs).
-            AddTitle("details.mine");
-            WrapPanel row = new WrapPanel();
-            row.Children.Add(MenuButton(new StackPanel
+            // --- What I note: one row ---
+            // Compatibility and rating open a menu (Ui/ChoiceMenu.cs); tried and to publish
+            // are switches, changed at each activation.
+            WrapPanel row = LabelRow("details.mine");
+            TileButton compatibility = SmallButton(new StackPanel
             {
                 Children =
                 {
@@ -359,44 +481,115 @@ namespace Ludopol
                         TextWrapping = TextWrapping.Wrap,
                         TextAlignment = TextAlignment.Center,
                     },
-                    new CompatibilityBar { Level = game.Compatibility, Height = 16, Margin = new Thickness(0, 10, 0, 0) },
+                    new CompatibilityBar { Level = game.Compatibility, Height = 12, Margin = new Thickness(0, 6, 0, 0) },
                 },
-            }, ShowCompatibilityMenu));
-            row.Children.Add(MenuButton(
+            }, ShowCompatibilityMenu);
+            compatibility.SetResourceReference(WidthProperty, "WideButtonWidth");
+            row.Children.Add(compatibility);
+            row.Children.Add(SmallButton(
                 Field("details.rating", game.Rating?.ToString() ?? Texts.Get("details.rating.none")), ShowRatingMenu));
-            row.Children.Add(Toggle("details.ownedOnSteam", game.OwnedOnSteam, () => game.OwnedOnSteam = !game.OwnedOnSteam));
-            row.Children.Add(Toggle("details.tried", game.Tried, () => game.Tried = !game.Tried));
-            row.Children.Add(Toggle("details.toPublish", game.ToPublish, () => game.ToPublish = !game.ToPublish));
-            Info.Children.Add(row);
+            row.Children.Add(Switch("details.tried", game.Tried, () => game.Tried = !game.Tried));
+            row.Children.Add(Switch("details.toPublish", game.ToPublish, () => game.ToPublish = !game.ToPublish));
 
             // No text field on this page: it would take the keyboard (shortcuts) and Dragon
             // cannot dictate into a WPF field. The notes are written on their own page
             // (NotesPage), in a Windows field Dragon dictates into.
-            AddTitle("details.notes");
+            WrapPanel notes = LabelRow("details.notes");
+            notes.Children.Add(SmallButton(Texts.Get("details.editNotes"),
+                () => MainWindow.Current.Navigate(new NotesPage(game.Id))));
             AddLine(string.IsNullOrWhiteSpace(game.Notes) ? Texts.Get("details.notes.none") : game.Notes!,
                 muted: string.IsNullOrWhiteSpace(game.Notes));
-            TileButton edit = MenuButton(Texts.Get("details.editNotes"),
-                () => MainWindow.Current.Navigate(new NotesPage(game.Id)));
-            edit.HorizontalAlignment = HorizontalAlignment.Left;
-            edit.Margin = new Thickness(12, 12, 0, 0);
-            Info.Children.Add(edit);
         }
 
-        /// <summary>A yes/no field: one button, blue when yes; each activation switches it.</summary>
-        private TileButton Toggle(string nameKey, bool value, Action change)
+        /// <summary>
+        /// Steam's logo (read from the Steam site, like the games' images) with a green tick.
+        /// Without Internet, the word "Steam" replaces the logo.
+        /// </summary>
+        private UIElement SteamBadge()
         {
-            TileButton button = MenuButton(Field(nameKey, YesNo(value)), () => SaveChange(change));
-            button.IsSelected = value;
-            return button;
+            StackPanel badge = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+            double size = (double)FindResource("BaseFontSize") * 1.2;
+            TextBlock name = new TextBlock { Text = "Steam", FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
+            try
+            {
+                BitmapImage logo = new BitmapImage(new Uri("https://store.steampowered.com/favicon.ico"));
+                Image image = new Image { Source = logo, Width = size, Height = size, VerticalAlignment = VerticalAlignment.Center };
+                logo.DownloadFailed += (s, e) => badge.Children[0] = new TextBlock { Text = name.Text, FontWeight = name.FontWeight, VerticalAlignment = VerticalAlignment.Center };
+                badge.Children.Add(image);
+            }
+            catch (Exception ex)
+            {
+                App.Log("Steam logo not shown: " + ex.Message);
+                badge.Children.Add(name);
+            }
+            badge.Children.Add(new TextBlock
+            {
+                Text = "✔",
+                FontWeight = FontWeights.Bold,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x3B, 0xB5, 0x4A)),
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(6, 0, 0, 0),
+            });
+            badge.ToolTip = Texts.Get("details.ownedOnSteam");
+            return badge;
         }
 
-        private TileButton MenuButton(object content, Action onClick)
+        /// <summary>A yes/no field as a switch: a track with a knob (on the right and blue when yes), then its name.</summary>
+        private TileButton Switch(string nameKey, bool value, Action change)
         {
-            TileButton button = new TileButton { Content = content };
-            button.SetResourceReference(WidthProperty, "WideButtonWidth");
+            Border knob = new Border
+            {
+                Width = 20,
+                Height = 20,
+                CornerRadius = new CornerRadius(10),
+                Background = Brushes.White,
+                Margin = new Thickness(3),
+                HorizontalAlignment = value ? HorizontalAlignment.Right : HorizontalAlignment.Left,
+            };
+            Border track = new Border { Width = 52, Height = 26, CornerRadius = new CornerRadius(13), Child = knob, VerticalAlignment = VerticalAlignment.Center };
+            track.SetResourceReference(Border.BackgroundProperty, value ? "AccentBrush" : "GaugeEmptyBrush");
+            StackPanel content = new StackPanel { Orientation = Orientation.Horizontal };
+            content.Children.Add(track);
+            content.Children.Add(new TextBlock { Text = Texts.Get(nameKey), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(10, 0, 0, 0) });
+            return SmallButton(content, () => SaveChange(change));
+        }
+
+        /// <summary>A half-size button (the links and my fields of the right part).</summary>
+        private static TileButton SmallButton(object content, Action onClick)
+        {
+            TileButton button = new TileButton { Content = content, Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(6) };
+            button.SetResourceReference(MinWidthProperty, "SmallButtonSize");
+            button.SetResourceReference(MinHeightProperty, "SmallButtonSize");
+            button.SetResourceReference(MaxWidthProperty, "WideButtonWidth");
             button.SetResourceReference(FontSizeProperty, "SmallFontSize");
             button.Click += (s, e) => onClick();
             return button;
+        }
+
+        /// <summary>A row starting with its name ("Tags :"), added to the page; the caller adds the buttons.</summary>
+        private WrapPanel LabelRow(string nameKey)
+        {
+            WrapPanel row = new WrapPanel { Margin = new Thickness(6, 6, 6, 0) };
+            row.Children.Add(new TextBlock
+            {
+                Text = Texts.Format("details.label", Texts.Get(nameKey)),
+                FontWeight = FontWeights.SemiBold,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(6, 0, 6, 0),
+            });
+            Info.Children.Add(row);
+            return row;
+        }
+
+        /// <summary>A row of half-size buttons, one per name; each opens the list of the games with that name.</summary>
+        private WrapPanel LinkRow(string nameKey, IEnumerable<string> names, Func<string, GameFilter> filter)
+        {
+            WrapPanel row = LabelRow(nameKey);
+            foreach (string name in names)
+            {
+                row.Children.Add(SmallButton(name, () => MainWindow.Current.Navigate(new GameListPage(filter(name), name))));
+            }
+            return row;
         }
 
         private void ShowCompatibilityMenu()
@@ -491,48 +684,19 @@ namespace Ludopol
         /// <summary>"Name : value", in the interface language.</summary>
         private static string Field(string nameKey, string value) => Texts.Format("details.field", Texts.Get(nameKey), value);
 
-        /// <summary>A row of buttons, one per name; each opens the list of the games with that name.</summary>
-        /// <param name="small">Half-size buttons (the tags, which are many).</param>
-        private void AddLinks(IEnumerable<string> names, Func<string, GameFilter> filter, bool small = false)
-        {
-            WrapPanel row = new WrapPanel();
-            foreach (string name in names)
-            {
-                TileButton button = new TileButton { Content = name };
-                button.SetResourceReference(MaxWidthProperty, "WideButtonWidth");
-                button.SetResourceReference(FontSizeProperty, "SmallFontSize");
-                if (small)
-                {
-                    button.SetResourceReference(MinWidthProperty, "SmallButtonSize");
-                    button.SetResourceReference(MinHeightProperty, "SmallButtonSize");
-                    button.Padding = new Thickness(8, 4, 8, 4);
-                }
-                button.Click += (s, e) => MainWindow.Current.Navigate(new GameListPage(filter(name), name));
-                row.Children.Add(button);
-            }
-            Info.Children.Add(row);
-        }
-
-        private void AddTitle(string key)
-        {
-            Info.Children.Add(new TextBlock { Text = Texts.Get(key), Style = (Style)FindResource("SectionTitle") });
-        }
-
         private void AddLine(string text, bool muted = false)
         {
             if (string.IsNullOrWhiteSpace(text))
             {
                 return;
             }
-            TextBlock block = new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(12, 12, 12, 0) };
+            TextBlock block = new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(12, 6, 12, 0) };
             if (muted)
             {
                 block.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
             }
             Info.Children.Add(block);
         }
-
-        private static string YesNo(bool value) => Texts.Get(value ? "common.yes" : "common.no");
 
         private static IEnumerable<string> NonEmpty(params string?[] values)
         {
