@@ -239,9 +239,7 @@ namespace Ludopol
             };
             if (game.SteamAppId.HasValue)
             {
-                choices.Add(new MenuChoice(Texts.Get("details.image.steam"), false, () => SetImage(game,
-                    "https://cdn.cloudflare.steamstatic.com/steam/apps/"
-                    + game.SteamAppId.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) + "/header.jpg")));
+                choices.Add(new MenuChoice(Texts.Get("details.image.steam"), false, () => SetSteamImage(game)));
             }
             ChoiceMenu.Show(Texts.Get("details.image.change"), choices, () => { });
         }
@@ -279,6 +277,34 @@ namespace Ludopol
             {
                 App.Log("Image not copied for \"" + game.Name + "\": " + ex);
                 _actionMessage = Texts.Format("play.error", ex.Message);
+                BuildActions(game);
+            }
+        }
+
+        /// <summary>Asks Steam for the address of the game's image (it changes from one game to another).</summary>
+        private async void SetSteamImage(Game game)
+        {
+            if (!game.SteamAppId.HasValue)
+            {
+                return;
+            }
+            try
+            {
+                string? image = await SteamStore.GetHeaderImageAsync(game.SteamAppId.Value);
+                if (image != null)
+                {
+                    SetImage(game, image);
+                    return;
+                }
+                _actionMessage = Texts.Get("details.image.noSteam");
+            }
+            catch (Exception ex)
+            {
+                App.Log("Steam image not found for \"" + game.Name + "\": " + ex.Message);
+                _actionMessage = Texts.Format("play.error", ex.Message);
+            }
+            if (_game == game && IsLoaded)
+            {
                 BuildActions(game);
             }
         }

@@ -185,5 +185,6 @@
   "details.image.use": "Utiliser cette image",
   "details.image.steam": "L'image de Steam",
   "category.image": "Choisir l'image de la catégorie",
-  "category.image.pick": "Touchez le jeu dont prendre l'image (ou ici pour arrêter)"
+  "category.image.pick": "Touchez le jeu dont prendre l'image (ou ici pour arrêter)",
+  "details.image.noSteam": "Steam ne donne pas d'image pour ce jeu."
 }

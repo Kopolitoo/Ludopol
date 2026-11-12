@@ -156,7 +156,17 @@ namespace Ludopol
                     ? Texts.Get("steamStore.free")
                     : data.TryGetProperty("price_overview", out JsonElement overview) ? String(overview, "final_formatted") : null;
                 changed |= Fill(() => game.Price, v => game.Price = v, price);
-                changed |= Fill(() => game.ImageUrl, v => game.ImageUrl = v, String(data, "header_image"));
+                // The image: Steam's own address replaces an empty one and any Steam address made
+                // by Ludopol (…/apps/NUMBER/header.jpg, which no longer exists for recent games).
+                // An image of mine (a file, another site) stays.
+                string? header = String(data, "header_image");
+                if (!string.IsNullOrWhiteSpace(header)
+                    && (string.IsNullOrWhiteSpace(game.ImageUrl) || IsSteamImage(game.ImageUrl))
+                    && game.ImageUrl != header)
+                {
+                    game.ImageUrl = header;
+                    changed = true;
+                }
                 if (!game.French.HasValue && String(data, "supported_languages") is string languages)
                 {
                     game.French = languages.Contains("Français", StringComparison.OrdinalIgnoreCase)
@@ -213,6 +223,31 @@ namespace Ludopol
             game.SteamAppId = appId;
             database.UpdateFromImport(game);
             App.Log("Steam number of \"" + game.Name + "\" set by hand: " + appId);
+        }
+
+        /// <summary>True for an image address on Steam's servers (not one of my own images).</summary>
+        public static bool IsSteamImage(string? address) =>
+            Uri.TryCreate(address, UriKind.Absolute, out Uri? uri)
+            && (uri.Host.EndsWith("steamstatic.com", StringComparison.OrdinalIgnoreCase)
+                || uri.Host.EndsWith("steampowered.com", StringComparison.OrdinalIgnoreCase)
+                || uri.Host.EndsWith("steamcdn-a.akamaihd.net", StringComparison.OrdinalIgnoreCase));
+
+        /// <summary>The address of a game's image as Steam gives it (appdetails), or null. Throws on a network error.</summary>
+        public static async Task<string?> GetHeaderImageAsync(long appId)
+        {
+            string json = await Http.GetStringAsync(
+                "https://store.steampowered.com/api/appdetails?appids=" + appId.ToString(CultureInfo.InvariantCulture) + "&filters=basic");
+            using (JsonDocument document = JsonDocument.Parse(json))
+            {
+                foreach (JsonProperty property in document.RootElement.EnumerateObject())
+                {
+                    if (property.Value.TryGetProperty("data", out JsonElement data) && data.ValueKind == JsonValueKind.Object)
+                    {
+                        return String(data, "header_image");
+                    }
+                }
+            }
+            return null;
         }
 
         /// <summary>The tags of a store page: the links with the class "app_tag", in Steam's order.</summary>

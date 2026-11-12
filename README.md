@@ -69,7 +69,9 @@ Les jeux ajoutés depuis Steam sont ensuite complétés depuis le magasin Steam,
 les champs vides sont remplis ; la catégorie reste « À trier (Steam) ». Le bouton « Compléter
 les fiches depuis le magasin Steam » relance cela pour tous les jeux Steam sans description, et
 la fiche d'un tel jeu se complète aussi à son ouverture. Sur la fiche de tout jeu présent sur Steam (acheté ou
-non), « Compléter » (icône Steam) fait de même à la demande.
+non), « Compléter » (icône Steam) fait de même à la demande. L'image fait exception : l'adresse
+donnée par Steam remplace aussi une image Steam qui ne s'affiche pas (Steam a changé l'adresse
+des images des jeux récents) ; une image à moi (fichier, autre site) reste.
 
 Si Steam ne donne pas la liste : dans Steam, Profil → Modifier le profil → Confidentialité,
 mettre « Détails des jeux » sur Public.
