@@ -23,7 +23,7 @@ et les images.
   Date de sortie, Développeur, Genres, Tags Steam, Prix, Français (et « Possédé sur Steam » si
   la colonne existe).
 - La feuille liste des jeux réputés jouables au regard : un jeu sans compatibilité dans la
-  feuille devient « Supposée (pas encore essayée) » (jauge bleu-gris). Réimporter la feuille
+  feuille devient « Supposée » (pas encore testée ; jauge bleu-gris). Réimporter la feuille
   l'applique aussi aux jeux déjà importés restés « Inconnue ».
 - Réimporter met à jour les données Steam, les catégories et les tags, mais ne remplace jamais
   ce qui a été rempli dans Ludopol (note, compatibilité, essayé, remarques, à publier, possédé).
@@ -42,7 +42,7 @@ revient dans Ludopol (après une installation dans Steam, par exemple).
 - **« Jouer »** demande une confirmation (« Oui, jouer » / « Non ») pour qu'un regard ne lance pas
   un jeu par erreur, puis lance le programme choisi s'il y en a un, sinon demande à Steam de
   lancer le jeu.
-- **« Installer avec Steam »** (jeu Steam pas installé) ouvre la fenêtre d'installation de Steam.
+- **« Installer »** (icône Steam) (jeu Steam pas installé) ouvre la fenêtre d'installation de Steam.
 - **« Choisir le programme du jeu… »** : pour un jeu hors Steam, ou pour lancer un jeu Steam
   autrement. On choisit un `.exe` ou un raccourci (`.lnk`, `.url`) ; le jeu compte alors comme
   installé tant que ce fichier existe.
@@ -69,7 +69,9 @@ Les jeux ajoutés depuis Steam sont ensuite complétés depuis le magasin Steam,
 les champs vides sont remplis ; la catégorie reste « À trier (Steam) ». Le bouton « Compléter
 les fiches depuis le magasin Steam » relance cela pour tous les jeux Steam sans description, et
 la fiche d'un tel jeu se complète aussi à son ouverture. Sur la fiche de tout jeu présent sur Steam (acheté ou
-non), « Compléter la fiche depuis Steam » fait de même à la demande.
+non), « Compléter » (icône Steam) fait de même à la demande. L'image fait exception : l'adresse
+donnée par Steam remplace aussi une image Steam qui ne s'affiche pas (Steam a changé l'adresse
+des images des jeux récents) ; une image à moi (fichier, autre site) reste.
 
 Si Steam ne donne pas la liste : dans Steam, Profil → Modifier le profil → Confidentialité,
 mettre « Détails des jeux » sur Public.
@@ -87,11 +89,34 @@ réduit à chaque lettre, sans tenir compte des majuscules ni des accents.
 Le titre d'une liste donne son nombre de jeux, par exemple « Tous les jeux (316) ». À droite du
 titre, « Tri : … » ouvre le choix du critère (nom, date d'ajout, note, compatibilité) et le
 bouton voisin inverse le sens (A → Z / Z → A, plus récents d'abord…). Les jeux sans note
-restent à la fin. Les pages Catégories, Tags et Développeurs ont aussi leur nombre et leur tri
+restent à la fin. Sur les cartes, une coche verte en haut à droite marque un jeu possédé sur
+Steam ; un jeu non possédé montre son prix en bas à droite (un jeu possédé n'a pas de prix : il ne
+coûte plus rien).
+
+Le filtre « Steam ou non » / « Sur Steam » / « Hors Steam » garde les jeux qui ont (ou n'ont pas)
+de numéro Steam ; « Hors Steam » désactive le filtre « Possédés sur Steam ». Dans les petits
+champs de saisie (nouveau nom, adresse, clé Steam), Entrée valide.
+
+**Édition par lot** : sous les filtres, « Ajouter une catégorie à ces N jeux » donne une ou
+plusieurs catégories (existantes ou nouvelles) à tous les jeux affichés. Par exemple, pour classer
+en FPS tous les jeux qui ont le tag FPS : Accueil → Tags → FPS, filtrer si besoin, puis ce bouton.
+Rien n'est retiré, sauf « À trier (Steam) » quand une vraie catégorie est donnée.
+
+**Renommer ou supprimer une catégorie** : ouvrir la catégorie (Accueil → Catégories), puis
+« Renommer cette catégorie » ou « Supprimer cette catégorie » sous les filtres. Renommer avec le
+nom d'une catégorie existante réunit les deux. Supprimer retire la catégorie de ses jeux, qui
+restent dans le catalogue. « Choisir l'image de la catégorie » passe le
+bouton en bleu : toucher ensuite un jeu de la liste donne son image à la carte de la catégorie.
+Une image personnelle du dossier Categories reste prioritaire, et n'est pas renommée avec la
+catégorie. Attention : réimporter la feuille remet les catégories de la feuille.
+
+Les pages Catégories, Tags et Développeurs ont aussi leur nombre et leur tri
 (par nom ou par nombre de jeux ; les tags commencent par les plus utilisés).
 
-Partout où le contenu défile, une fine jauge à droite montre où l'on est dans la page, et le
-clavier fonctionne : Page suivante / Espace, Page précédente, Début, Fin, flèches haut et bas.
+Partout où le contenu défile, un grand ascenseur à droite montre où l'on est dans la page : une
+petite flèche à chaque bout (un écran à la fois, en continu tant que le regard reste dessus), un
+clic au-dessus ou au-dessous du curseur pour sauter d'un écran, et le curseur se fait glisser. Le
+défilement de Prunel (molette) marche partout. Le clavier fonctionne aussi : Page suivante / Espace, Page précédente, Début, Fin, flèches haut et bas.
 La touche Retour arrière fait comme le bouton « Retour ». Pendant la saisie dans un champ (la
 recherche), seules Page suivante et Page précédente font défiler : les autres touches servent au texte.
 
@@ -104,9 +129,25 @@ un champ permet d'en créer une nouvelle, « Terminé » enregistre. Choisir une
 retire « À trier (Steam) ». Attention : réimporter la feuille remet les catégories de la feuille
 pour les jeux qui y sont.
 
-Un jeu Steam pas installé propose « Installer avec Steam » s'il est possédé. Tout jeu présent
-sur Steam a « Voir le jeu sur le magasin Steam » (page dans Steam, ou dans le navigateur sans
-Steam). « Choisir le programme du jeu… » n'est proposé que pour un jeu non possédé sur Steam.
+Un jeu Steam pas installé propose « Installer » s'il est possédé. Tout jeu présent
+sur Steam a « Fiche jeu » (page du magasin Steam dans Steam, ou dans le navigateur sans
+Steam). Les boutons sous l'image sont à mi-hauteur, sauf « Jouer ».
+« Choisir le programme du jeu… » n'est proposé que pour un jeu non possédé sur Steam.
+
+La fiche est faite pour tenir sur un écran : petits boutons, nom de chaque rangée en début de
+ligne, « Testé » et « À publier » en interrupteurs, le nombre de jeux du développeur sur son
+bouton. Pas de prix pour un jeu possédé. Un jeu possédé sur Steam montre le logo Steam
+avec une coche verte : c'est une information, mise à jour par la synchronisation (Paramètres →
+Steam).
+
+« Image » (sous l'image de la fiche) propose un fichier image (copié dans le dossier
+Images de Ludopol), l'adresse d'une image sur Internet, ou l'image de Steam pour un jeu lié à Steam.
+
+« Lien » (icônes Steam et Internet) demande l'adresse de la page du jeu
+sur le magasin Steam, ou son numéro : utile pour un jeu « Introuvable » ou lié à la mauvaise
+page. Le jeu prend ce numéro, ce qui venait de l'ancienne page Steam est effacé (description,
+tags, image…), puis la fiche est complétée depuis le magasin. Mes catégories, notes et remarques
+restent.
 
 ### Mes remarques (dictée Dragon)
 
@@ -147,7 +188,7 @@ qu'on peut aussi modifier à la main, Ludopol fermé :
 | --- | --- | --- |
 | `Language` | `fr` | Langue de l'interface (`fr` ou `en`). |
 | `Theme` | `dark` | Couleurs : `dark` (sombre), `light` (clair) ou `system` (comme Windows). |
-| `FullScreen` | `true` | Plein écran ; `false` : fenêtre ordinaire, déplaçable et redimensionnable. |
+| `FullScreen` | `false` | `false` : fenêtre ordinaire agrandie (au premier lancement), déplaçable et redimensionnable ; `true` : plein écran. |
 | `TileWidth`, `TileHeight` | 320, 300 | Taille des tuiles de jeux. |
 | `ButtonMinSize` | 150 | Taille minimale de tout bouton. |
 | `Spacing` | 24 | Écart entre deux boutons. |

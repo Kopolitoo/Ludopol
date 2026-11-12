@@ -29,8 +29,11 @@ namespace Ludopol
         /// <summary>Colours: "dark", "light", or "system" (as Windows). See Ui/ThemeColors.cs.</summary>
         public string Theme { get; set; } = "dark";
 
-        /// <summary>true: full screen, without frame; false: an ordinary window, which can be moved and resized.</summary>
-        public bool FullScreen { get; set; } = true;
+        /// <summary>
+        /// true: full screen, without frame; false (at the first start): an ordinary window,
+        /// maximised, which can be moved and resized.
+        /// </summary>
+        public bool FullScreen { get; set; }
 
         /// <summary>The last games sheet imported (settings page, "Import again").</summary>
         public string? LastImportPath { get; set; }
@@ -152,6 +155,8 @@ namespace Ludopol
             resources["WideButtonWidth"] = ButtonMinSize * 2;
             // Half-size buttons: the tags of a game's page.
             resources["SmallButtonSize"] = Math.Round(ButtonMinSize / 2);
+            // A text field for a name (rename a category…): the width of three wide buttons.
+            resources["TextFieldWidth"] = ButtonMinSize * 6;
             resources["SideButtonWidth"] = Math.Round(ButtonMinSize * 1.4);
             // The left navigation column: one side button and its margins, as wide as the filter column.
             resources["SideColumnWidth"] = Math.Round(ButtonMinSize * 1.4) + Spacing;

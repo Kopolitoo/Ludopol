@@ -92,6 +92,18 @@ namespace Ludopol
                     App.Log("Database: updated to version 2");
                 }
 
+                if (version < 3)
+                {
+                    // Version 3: the image chosen for a category (one of its games' images).
+                    Execute(connection, @"
+                        CREATE TABLE IF NOT EXISTS category_images (
+                            name       TEXT PRIMARY KEY,
+                            image_url  TEXT NOT NULL
+                        );
+                        PRAGMA user_version = 3;");
+                    App.Log("Database: updated to version 3");
+                }
+
                 long count = (long)(Scalar(connection, "SELECT COUNT(*) FROM games") ?? 0L);
                 if (count == 0)
                 {
@@ -398,6 +410,10 @@ namespace Ludopol
                     sql.Append(" AND g.tried = $tried");
                     command.Parameters.AddWithValue("$tried", filter.Tried.Value ? 1 : 0);
                 }
+                if (filter.OnSteam.HasValue)
+                {
+                    sql.Append(filter.OnSteam.Value ? " AND g.steam_app_id IS NOT NULL" : " AND g.steam_app_id IS NULL");
+                }
                 if (filter.OwnedOnSteam.HasValue)
                 {
                     sql.Append(" AND g.owned_on_steam = $owned");
@@ -496,17 +512,19 @@ namespace Ludopol
 
         /// <summary>
         /// The categories, with their number of games, in alphabetical order. Each one comes
-        /// with the image of one of its games for its card: the best rated, then the most
-        /// recently added.
+        /// with the image of its card: the one chosen for it (SetCategoryImage), otherwise the
+        /// image of one of its games, the best rated, then the most recently added.
         /// </summary>
         public List<NamedCount> GetCategories() =>
             ReadCounts(@"
                 SELECT c.name, COUNT(*),
-                       (SELECT g.image_url FROM games g
-                        JOIN game_categories c2 ON c2.game_id = g.id
-                        WHERE c2.name = c.name AND g.image_url IS NOT NULL AND g.image_url <> ''
-                        ORDER BY g.rating IS NULL, g.rating DESC, g.added_at DESC
-                        LIMIT 1)
+                       COALESCE(
+                           (SELECT i.image_url FROM category_images i WHERE i.name = c.name),
+                           (SELECT g.image_url FROM games g
+                            JOIN game_categories c2 ON c2.game_id = g.id
+                            WHERE c2.name = c.name AND g.image_url IS NOT NULL AND g.image_url <> ''
+                            ORDER BY g.rating IS NULL, g.rating DESC, g.added_at DESC
+                            LIMIT 1))
                 FROM game_categories c GROUP BY c.name")
                 .OrderBy(c => c.Name, NameOrder).ToList();
 
@@ -546,6 +564,101 @@ namespace Ludopol
                 }
             }
             return simple.ToString().Normalize(NormalizationForm.FormC);
+        }
+
+        /// <summary>
+        /// Adds categories to many games at once (the games of a list). A game that already has
+        /// one keeps it once. removeName (the category "To sort (Steam)"), when given, is taken
+        /// off these games. Returns how many games got at least one new category.
+        /// </summary>
+        public int AddCategories(IEnumerable<long> gameIds, IReadOnlyCollection<string> names, string? removeName)
+        {
+            int changed = 0;
+            using (SqliteConnection connection = Connect())
+            using (SqliteTransaction transaction = connection.BeginTransaction())
+            {
+                foreach (long id in gameIds.Distinct())
+                {
+                    int added = 0;
+                    foreach (string name in names.Distinct())
+                    {
+                        SqliteCommand insert = connection.CreateCommand();
+                        insert.Transaction = transaction;
+                        insert.CommandText = "INSERT OR IGNORE INTO game_categories (game_id, name) VALUES ($id, $name)";
+                        insert.Parameters.AddWithValue("$id", id);
+                        insert.Parameters.AddWithValue("$name", name);
+                        added += insert.ExecuteNonQuery();
+                    }
+                    if (removeName != null)
+                    {
+                        SqliteCommand remove = connection.CreateCommand();
+                        remove.Transaction = transaction;
+                        remove.CommandText = "DELETE FROM game_categories WHERE game_id = $id AND name = $name";
+                        remove.Parameters.AddWithValue("$id", id);
+                        remove.Parameters.AddWithValue("$name", removeName);
+                        remove.ExecuteNonQuery();
+                    }
+                    if (added > 0)
+                    {
+                        changed++;
+                    }
+                }
+                transaction.Commit();
+            }
+            App.Log("Categories " + string.Join(", ", names) + " added to " + changed + " games");
+            return changed;
+        }
+
+        /// <summary>
+        /// Renames a category for all its games. If the new name already exists, the two
+        /// categories become one.
+        /// </summary>
+        public void RenameCategory(string oldName, string newName)
+        {
+            using (SqliteConnection connection = Connect())
+            using (SqliteTransaction transaction = connection.BeginTransaction())
+            {
+                SqliteCommand command = connection.CreateCommand();
+                command.Transaction = transaction;
+                command.CommandText = @"
+                    INSERT OR IGNORE INTO game_categories (game_id, name)
+                        SELECT game_id, $new FROM game_categories WHERE name = $old;
+                    DELETE FROM game_categories WHERE name = $old;
+                    UPDATE OR IGNORE category_images SET name = $new WHERE name = $old;
+                    DELETE FROM category_images WHERE name = $old;";
+                command.Parameters.AddWithValue("$old", oldName);
+                command.Parameters.AddWithValue("$new", newName);
+                command.ExecuteNonQuery();
+                transaction.Commit();
+            }
+            App.Log("Category renamed: \"" + oldName + "\" → \"" + newName + "\"");
+        }
+
+        /// <summary>Chooses the image of a category's card (the address of one of its games' images).</summary>
+        public void SetCategoryImage(string name, string imageUrl)
+        {
+            using (SqliteConnection connection = Connect())
+            {
+                SqliteCommand command = connection.CreateCommand();
+                command.CommandText = "INSERT OR REPLACE INTO category_images (name, image_url) VALUES ($name, $image)";
+                command.Parameters.AddWithValue("$name", name);
+                command.Parameters.AddWithValue("$image", imageUrl);
+                command.ExecuteNonQuery();
+            }
+            App.Log("Image of category \"" + name + "\": " + imageUrl);
+        }
+
+        /// <summary>Removes a category from all its games (the games stay in the catalogue).</summary>
+        public void DeleteCategory(string name)
+        {
+            using (SqliteConnection connection = Connect())
+            {
+                SqliteCommand command = connection.CreateCommand();
+                command.CommandText = "DELETE FROM game_categories WHERE name = $name; DELETE FROM category_images WHERE name = $name;";
+                command.Parameters.AddWithValue("$name", name);
+                command.ExecuteNonQuery();
+            }
+            App.Log("Category deleted: \"" + name + "\"");
         }
 
         /// <summary>Writes a game's categories and tags (tags in Steam's order).</summary>

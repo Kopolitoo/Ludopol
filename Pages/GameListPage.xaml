@@ -8,6 +8,9 @@
       On the search page (Home → Search), SearchBar is shown above the tiles.
       ChoiceMenu covers the list while the choices of the category or compatibility filter are shown.
     -->
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="ShowIfTrue" />
+    </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -45,6 +48,20 @@
                                                        HorizontalAlignment="Center" VerticalAlignment="Center" />
                                         </Border>
                                         <Image Source="{Binding ImageUrl, TargetNullValue={x:Null}}" Stretch="UniformToFill" />
+                                        <!-- Owned on Steam: a green tick at the top right. -->
+                                        <Border Visibility="{Binding OwnedOnSteam, Converter={StaticResource ShowIfTrue}}"
+                                                HorizontalAlignment="Right" VerticalAlignment="Top" Margin="6"
+                                                Width="40" Height="40" CornerRadius="20" Background="#3BB54A">
+                                            <TextBlock Text="✔" Foreground="White" FontWeight="Bold" FontSize="24"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <!-- Not owned: its price at the bottom right. -->
+                                        <Border Visibility="{Binding HasShownPrice, Converter={StaticResource ShowIfTrue}}"
+                                                HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="6"
+                                                Padding="8,2,8,2" CornerRadius="6" Background="#D0000000">
+                                            <TextBlock Text="{Binding ShownPrice}" Foreground="White"
+                                                       FontSize="{DynamicResource SmallFontSize}" />
+                                        </Border>
                                     </Grid>
                                     <!-- The name wraps on several lines: never cut. -->
                                     <TextBlock Text="{Binding Name}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,8,0,6" FontSize="{DynamicResource SmallFontSize}" />

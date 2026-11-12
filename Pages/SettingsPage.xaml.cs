@@ -320,6 +320,14 @@ namespace Ludopol
             };
             sync.SetResourceReference(WidthProperty, "WideButtonWidth");
             sync.Click += (s, e) => SyncSteam(account);
+            // Enter in the key's field: as "Synchronise".
+            keyBox.KeyDown += (s, e) =>
+            {
+                if (e.Key == System.Windows.Input.Key.Enter && sync.IsEnabled)
+                {
+                    SyncSteam(account);
+                }
+            };
             row.Children.Add(sync);
             Info.Children.Add(row);
 

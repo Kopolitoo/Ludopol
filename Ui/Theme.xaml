@@ -34,6 +34,8 @@
     <system:Double x:Key="TileHeight">300</system:Double>
     <system:Double x:Key="ButtonMinSize">150</system:Double>
     <system:Double x:Key="WideButtonWidth">300</system:Double>
+    <system:Double x:Key="SmallButtonSize">75</system:Double>
+    <system:Double x:Key="TextFieldWidth">900</system:Double>
     <system:Double x:Key="SideButtonWidth">210</system:Double>
     <system:Double x:Key="TileImageHeight">180</system:Double>
     <system:Double x:Key="BaseFontSize">28</system:Double>

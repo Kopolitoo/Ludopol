@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -25,11 +26,16 @@ namespace Ludopol
 
         private readonly StackPanel _filters = new StackPanel();
         private readonly TileButton _installedFilter = new TileButton();
+        private readonly TileButton _steamFilter = new TileButton();
         private readonly TileButton _ownedFilter = new TileButton();
         private readonly TileButton _triedFilter = new TileButton();
         private readonly TileButton _categoryFilter = new TileButton();
         private readonly TileButton _compatibilityFilter = new TileButton();
         private readonly TileButton _ratingFilter = new TileButton();
+
+        /// <summary>Below the filters: adds categories to every game of the list (batch editing).</summary>
+        private readonly TileButton _addCategoryButton = new TileButton();
+        private List<Game> _shown = new List<Game>();
 
         /// <summary>Right of the title: the sort criterion (a menu) and the direction (a toggle).</summary>
         private readonly StackPanel _sortButtons = new StackPanel { Orientation = Orientation.Horizontal };
@@ -38,7 +44,14 @@ namespace Ludopol
         private int _count = -1;
 
         private readonly GameFilter _filter;
-        private readonly string _title;
+        private string _title;
+
+        /// <summary>The category this list was opened for (it can be renamed or deleted here), or null.</summary>
+        private string? _ownCategory;
+
+        /// <summary>"Choose the category's image": while it is on (blue), touching a game takes its image.</summary>
+        private readonly TileButton _pickImageButton = new TileButton();
+        private bool _pickingImage;
 
         private readonly bool _searchMode;
 
@@ -56,7 +69,7 @@ namespace Ludopol
             }
 
             // A list opened from a category keeps it: no category filter there.
-            List<TileButton> buttons = new List<TileButton> { _installedFilter, _ownedFilter, _triedFilter };
+            List<TileButton> buttons = new List<TileButton> { _installedFilter, _steamFilter, _ownedFilter, _triedFilter };
             if (filter.Category == null)
             {
                 buttons.Add(_categoryFilter);
@@ -70,11 +83,45 @@ namespace Ludopol
                 _filters.Children.Add(button);
             }
             _installedFilter.Click += OnInstalledFilterClick;
+            _steamFilter.Click += OnSteamFilterClick;
             _ownedFilter.Click += OnOwnedFilterClick;
             _triedFilter.Click += OnTriedFilterClick;
             _categoryFilter.Click += OnCategoryFilterClick;
             _compatibilityFilter.Click += OnCompatibilityFilterClick;
             _ratingFilter.Click += OnRatingFilterClick;
+
+            _addCategoryButton.SetResourceReference(WidthProperty, "SideButtonWidth");
+            _addCategoryButton.SetResourceReference(FontSizeProperty, "SmallFontSize");
+            _addCategoryButton.Click += OnAddCategoryClick;
+            _filters.Children.Add(_addCategoryButton);
+
+            // A category's own list: renaming or deleting that category.
+            _ownCategory = filter.Category;
+            if (_ownCategory != null)
+            {
+                foreach ((TileButton button, string key, RoutedEventHandler click) in new (TileButton, string, RoutedEventHandler)[]
+                {
+                    (new TileButton(), "category.rename", OnRenameCategoryClick),
+                    (_pickImageButton, "category.image", OnPickImageClick),
+                    (new TileButton(), "category.delete", OnDeleteCategoryClick),
+                })
+                {
+                    button.Content = Texts.Get(key);
+                    button.SetResourceReference(WidthProperty, "SideButtonWidth");
+                    button.SetResourceReference(FontSizeProperty, "SmallFontSize");
+                    button.Click += click;
+                    _filters.Children.Add(button);
+                }
+            }
+
+            // Half-height buttons, close together: the whole column fits on the screen.
+            foreach (TileButton button in _filters.Children.OfType<TileButton>())
+            {
+                button.SetResourceReference(MinHeightProperty, "SmallButtonSize");
+                button.Padding = new Thickness(8, 4, 8, 4);
+                button.Margin = new Thickness(12, 4, 12, 4);
+            }
+            _addCategoryButton.Margin = new Thickness(12, 24, 12, 4);   // apart from the filters
 
             foreach (TileButton button in new[] { _sortByButton, _sortOrderButton })
             {
@@ -117,10 +164,85 @@ namespace Ludopol
         private void ShowGames()
         {
             List<Game> games = App.Database.GetGames(_filter);
+            _shown = games;
+            _addCategoryButton.Content = Texts.Format("batch.addCategory", games.Count);
+            _addCategoryButton.IsEnabled = games.Count > 0;
             Games.ItemsSource = games;
             EmptyText.Visibility = games.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             _count = games.Count;
             MainWindow.Current.RefreshTitle();
+        }
+
+        // ----- Batch editing -----
+
+        /// <summary>
+        /// Gives one or more categories to all the games shown (for example every game with the
+        /// tag "FPS": open the tag, filter if needed, then this button). Nothing is taken away,
+        /// except "To sort (Steam)" once a real category is given.
+        /// </summary>
+        private void OnAddCategoryClick(object sender, RoutedEventArgs e)
+        {
+            List<Game> games = _shown;
+            if (games.Count == 0)
+            {
+                return;
+            }
+            string toSort = Texts.Get("steamSync.newCategory");
+            List<string> names = App.Database.GetCategories().Select(c => c.Name).Where(n => n != toSort).ToList();
+            ChoiceMenu.ShowSeveral(Texts.Format("batch.title", games.Count), names, new List<string>(), chosen =>
+            {
+                chosen.Remove(toSort);
+                if (chosen.Count == 0)
+                {
+                    return;
+                }
+                App.Database.AddCategories(games.Select(g => g.Id), chosen, toSort);
+                ApplyFilter();
+            });
+        }
+
+        // ----- The category of this list -----
+
+        private void OnRenameCategoryClick(object sender, RoutedEventArgs e)
+        {
+            if (_ownCategory is not string oldName)
+            {
+                return;
+            }
+            ChoiceMenu.ShowText(Texts.Format("category.rename.title", oldName), oldName, Texts.Get("category.rename.ok"), newName =>
+            {
+                if (newName == oldName)
+                {
+                    return;
+                }
+                App.Database.RenameCategory(oldName, newName);
+                _ownCategory = newName;
+                _filter.Category = newName;
+                _title = newName;
+                ApplyFilter();   // shows the new name in the title too
+            });
+        }
+
+        private void OnPickImageClick(object sender, RoutedEventArgs e) => SetPickingImage(!_pickingImage);
+
+        private void SetPickingImage(bool on)
+        {
+            _pickingImage = on;
+            _pickImageButton.IsSelected = on;
+            _pickImageButton.Content = Texts.Get(on ? "category.image.pick" : "category.image");
+        }
+
+        private void OnDeleteCategoryClick(object sender, RoutedEventArgs e)
+        {
+            if (_ownCategory is not string name)
+            {
+                return;
+            }
+            // A confirmation: "Delete" or "Cancel", over the list.
+            ChoiceMenu.Show(Texts.Format("category.delete.question", name,
+                    App.Database.GetGames(new GameFilter { Category = name }).Count),
+                new[] { new MenuChoice(Texts.Get("category.delete.confirm"), false, () => App.Database.DeleteCategory(name)) },
+                () => MainWindow.Current.GoBack());
         }
 
         // ----- Sort -----
@@ -181,14 +303,26 @@ namespace Ludopol
         public void OnLeaving()
         {
             ChoiceMenu.Hide();
+            SetPickingImage(false);
         }
 
         private void OnGameClick(object sender, RoutedEventArgs e)
         {
-            if (((FrameworkElement)sender).DataContext is Game game)
+            if (((FrameworkElement)sender).DataContext is not Game game)
             {
-                MainWindow.Current.Navigate(new GameDetailsPage(game.Id));
+                return;
             }
+            if (_pickingImage && _ownCategory != null)
+            {
+                // Choosing the category's image: a game without an image changes nothing.
+                if (!string.IsNullOrWhiteSpace(game.ImageUrl))
+                {
+                    App.Database.SetCategoryImage(_ownCategory, game.ImageUrl);
+                    SetPickingImage(false);
+                }
+                return;
+            }
+            MainWindow.Current.Navigate(new GameDetailsPage(game.Id));
         }
 
         // ----- Filters -----
@@ -196,6 +330,17 @@ namespace Ludopol
         private void OnInstalledFilterClick(object sender, RoutedEventArgs e)
         {
             _filter.Installed = Next(YesNoSteps, _filter.Installed);
+            ApplyFilter();
+        }
+
+        /// <summary>On Steam or not. "Not on Steam" turns the owned filter off: it has no meaning there.</summary>
+        private void OnSteamFilterClick(object sender, RoutedEventArgs e)
+        {
+            _filter.OnSteam = Next(YesNoSteps, _filter.OnSteam);
+            if (_filter.OnSteam == false)
+            {
+                _filter.OwnedOnSteam = null;
+            }
             ApplyFilter();
         }
 
@@ -281,6 +426,15 @@ namespace Ludopol
                 null => "filter.installed.all",
             });
             _installedFilter.IsSelected = _filter.Installed.HasValue;
+
+            _steamFilter.Content = Texts.Get(_filter.OnSteam switch
+            {
+                true => "filter.steam.yes",
+                false => "filter.steam.no",
+                null => "filter.steam.all",
+            });
+            _steamFilter.IsSelected = _filter.OnSteam.HasValue;
+            _ownedFilter.IsEnabled = _filter.OnSteam != false;
 
             _ownedFilter.Content = Texts.Get(_filter.OwnedOnSteam switch
             {
