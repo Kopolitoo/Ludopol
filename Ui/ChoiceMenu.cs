@@ -99,6 +99,14 @@ namespace Ludopol
             newName.SetResourceReference(WidthProperty, "WideButtonWidth");
             TileButton add = new TileButton { Content = Texts.Get("menu.add") };
             add.SetResourceReference(WidthProperty, "WideButtonWidth");
+            // Enter in the field: as "Add".
+            newName.KeyDown += (s, e) =>
+            {
+                if (e.Key == System.Windows.Input.Key.Enter)
+                {
+                    add.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+                }
+            };
             add.Click += (s, e) =>
             {
                 string name = newName.Text.Trim();

@@ -121,8 +121,10 @@ namespace Ludopol
             }
             else
             {
+                // An ordinary window, maximised: it fills the screen above the taskbar.
                 WindowStyle = WindowStyle.SingleBorderWindow;
                 ResizeMode = ResizeMode.CanResize;
+                WindowState = WindowState.Maximized;
             }
         }
 

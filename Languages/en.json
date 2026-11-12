@@ -186,5 +186,8 @@
   "details.image.steam": "Steam's image",
   "category.image": "Choose the category's image",
   "category.image.pick": "Touch the game whose image to take (or here to stop)",
-  "details.image.noSteam": "Steam gives no image for this game."
+  "details.image.noSteam": "Steam gives no image for this game.",
+  "filter.steam.all": "On Steam or not",
+  "filter.steam.yes": "On Steam",
+  "filter.steam.no": "Not on Steam"
 }

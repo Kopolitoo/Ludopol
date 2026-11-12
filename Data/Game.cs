@@ -127,6 +127,8 @@ namespace Ludopol
         public bool? Installed { get; set; }
         /// <summary>true: tried games only; false: not tried yet; null: all.</summary>
         public bool? Tried { get; set; }
+        /// <summary>true: the games on Steam (with a Steam number) only; false: the others; null: all.</summary>
+        public bool? OnSteam { get; set; }
         /// <summary>true: owned on Steam only; false: not owned; null: all.</summary>
         public bool? OwnedOnSteam { get; set; }
         /// <summary>Keeps the games with exactly this compatibility; null: all.</summary>

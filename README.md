@@ -93,6 +93,10 @@ restent à la fin. Sur les cartes, une coche verte en haut à droite marque un j
 Steam ; un jeu non possédé montre son prix en bas à droite (un jeu possédé n'a pas de prix : il ne
 coûte plus rien).
 
+Le filtre « Steam ou non » / « Sur Steam » / « Hors Steam » garde les jeux qui ont (ou n'ont pas)
+de numéro Steam ; « Hors Steam » désactive le filtre « Possédés sur Steam ». Dans les petits
+champs de saisie (nouveau nom, adresse, clé Steam), Entrée valide.
+
 **Édition par lot** : sous les filtres, « Ajouter une catégorie à ces N jeux » donne une ou
 plusieurs catégories (existantes ou nouvelles) à tous les jeux affichés. Par exemple, pour classer
 en FPS tous les jeux qui ont le tag FPS : Accueil → Tags → FPS, filtrer si besoin, puis ce bouton.
@@ -184,7 +188,7 @@ qu'on peut aussi modifier à la main, Ludopol fermé :
 | --- | --- | --- |
 | `Language` | `fr` | Langue de l'interface (`fr` ou `en`). |
 | `Theme` | `dark` | Couleurs : `dark` (sombre), `light` (clair) ou `system` (comme Windows). |
-| `FullScreen` | `true` | Plein écran ; `false` : fenêtre ordinaire, déplaçable et redimensionnable. |
+| `FullScreen` | `false` | `false` : fenêtre ordinaire agrandie (au premier lancement), déplaçable et redimensionnable ; `true` : plein écran. |
 | `TileWidth`, `TileHeight` | 320, 300 | Taille des tuiles de jeux. |
 | `ButtonMinSize` | 150 | Taille minimale de tout bouton. |
 | `Spacing` | 24 | Écart entre deux boutons. |

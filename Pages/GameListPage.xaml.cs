@@ -26,6 +26,7 @@ namespace Ludopol
 
         private readonly StackPanel _filters = new StackPanel();
         private readonly TileButton _installedFilter = new TileButton();
+        private readonly TileButton _steamFilter = new TileButton();
         private readonly TileButton _ownedFilter = new TileButton();
         private readonly TileButton _triedFilter = new TileButton();
         private readonly TileButton _categoryFilter = new TileButton();
@@ -68,7 +69,7 @@ namespace Ludopol
             }
 
             // A list opened from a category keeps it: no category filter there.
-            List<TileButton> buttons = new List<TileButton> { _installedFilter, _ownedFilter, _triedFilter };
+            List<TileButton> buttons = new List<TileButton> { _installedFilter, _steamFilter, _ownedFilter, _triedFilter };
             if (filter.Category == null)
             {
                 buttons.Add(_categoryFilter);
@@ -82,6 +83,7 @@ namespace Ludopol
                 _filters.Children.Add(button);
             }
             _installedFilter.Click += OnInstalledFilterClick;
+            _steamFilter.Click += OnSteamFilterClick;
             _ownedFilter.Click += OnOwnedFilterClick;
             _triedFilter.Click += OnTriedFilterClick;
             _categoryFilter.Click += OnCategoryFilterClick;
@@ -331,6 +333,17 @@ namespace Ludopol
             ApplyFilter();
         }
 
+        /// <summary>On Steam or not. "Not on Steam" turns the owned filter off: it has no meaning there.</summary>
+        private void OnSteamFilterClick(object sender, RoutedEventArgs e)
+        {
+            _filter.OnSteam = Next(YesNoSteps, _filter.OnSteam);
+            if (_filter.OnSteam == false)
+            {
+                _filter.OwnedOnSteam = null;
+            }
+            ApplyFilter();
+        }
+
         private void OnOwnedFilterClick(object sender, RoutedEventArgs e)
         {
             _filter.OwnedOnSteam = Next(YesNoSteps, _filter.OwnedOnSteam);
@@ -413,6 +426,15 @@ namespace Ludopol
                 null => "filter.installed.all",
             });
             _installedFilter.IsSelected = _filter.Installed.HasValue;
+
+            _steamFilter.Content = Texts.Get(_filter.OnSteam switch
+            {
+                true => "filter.steam.yes",
+                false => "filter.steam.no",
+                null => "filter.steam.all",
+            });
+            _steamFilter.IsSelected = _filter.OnSteam.HasValue;
+            _ownedFilter.IsEnabled = _filter.OnSteam != false;
 
             _ownedFilter.Content = Texts.Get(_filter.OwnedOnSteam switch
             {

@@ -29,8 +29,11 @@ namespace Ludopol
         /// <summary>Colours: "dark", "light", or "system" (as Windows). See Ui/ThemeColors.cs.</summary>
         public string Theme { get; set; } = "dark";
 
-        /// <summary>true: full screen, without frame; false: an ordinary window, which can be moved and resized.</summary>
-        public bool FullScreen { get; set; } = true;
+        /// <summary>
+        /// true: full screen, without frame; false (at the first start): an ordinary window,
+        /// maximised, which can be moved and resized.
+        /// </summary>
+        public bool FullScreen { get; set; }
 
         /// <summary>The last games sheet imported (settings page, "Import again").</summary>
         public string? LastImportPath { get; set; }

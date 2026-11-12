@@ -410,6 +410,10 @@ namespace Ludopol
                     sql.Append(" AND g.tried = $tried");
                     command.Parameters.AddWithValue("$tried", filter.Tried.Value ? 1 : 0);
                 }
+                if (filter.OnSteam.HasValue)
+                {
+                    sql.Append(filter.OnSteam.Value ? " AND g.steam_app_id IS NOT NULL" : " AND g.steam_app_id IS NULL");
+                }
                 if (filter.OwnedOnSteam.HasValue)
                 {
                     sql.Append(" AND g.owned_on_steam = $owned");
