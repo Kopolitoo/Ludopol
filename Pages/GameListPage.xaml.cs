@@ -43,7 +43,10 @@ namespace Ludopol
         private int _count = -1;
 
         private readonly GameFilter _filter;
-        private readonly string _title;
+        private string _title;
+
+        /// <summary>The category this list was opened for (it can be renamed or deleted here), or null.</summary>
+        private string? _ownCategory;
 
         private readonly bool _searchMode;
 
@@ -86,6 +89,24 @@ namespace Ludopol
             _addCategoryButton.Margin = new Thickness(12, 36, 12, 12);   // apart from the filters
             _addCategoryButton.Click += OnAddCategoryClick;
             _filters.Children.Add(_addCategoryButton);
+
+            // A category's own list: renaming or deleting that category.
+            _ownCategory = filter.Category;
+            if (_ownCategory != null)
+            {
+                foreach ((string key, RoutedEventHandler click) in new (string, RoutedEventHandler)[]
+                {
+                    ("category.rename", OnRenameCategoryClick),
+                    ("category.delete", OnDeleteCategoryClick),
+                })
+                {
+                    TileButton button = new TileButton { Content = Texts.Get(key) };
+                    button.SetResourceReference(WidthProperty, "SideButtonWidth");
+                    button.SetResourceReference(FontSizeProperty, "SmallFontSize");
+                    button.Click += click;
+                    _filters.Children.Add(button);
+                }
+            }
 
             foreach (TileButton button in new[] { _sortByButton, _sortOrderButton })
             {
@@ -163,6 +184,41 @@ namespace Ludopol
                 App.Database.AddCategories(games.Select(g => g.Id), chosen, toSort);
                 ApplyFilter();
             });
+        }
+
+        // ----- The category of this list -----
+
+        private void OnRenameCategoryClick(object sender, RoutedEventArgs e)
+        {
+            if (_ownCategory is not string oldName)
+            {
+                return;
+            }
+            ChoiceMenu.ShowText(Texts.Format("category.rename.title", oldName), oldName, Texts.Get("category.rename.ok"), newName =>
+            {
+                if (newName == oldName)
+                {
+                    return;
+                }
+                App.Database.RenameCategory(oldName, newName);
+                _ownCategory = newName;
+                _filter.Category = newName;
+                _title = newName;
+                ApplyFilter();   // shows the new name in the title too
+            });
+        }
+
+        private void OnDeleteCategoryClick(object sender, RoutedEventArgs e)
+        {
+            if (_ownCategory is not string name)
+            {
+                return;
+            }
+            // A confirmation: "Delete" or "Cancel", over the list.
+            ChoiceMenu.Show(Texts.Format("category.delete.question", name,
+                    App.Database.GetGames(new GameFilter { Category = name }).Count),
+                new[] { new MenuChoice(Texts.Get("category.delete.confirm"), false, () => App.Database.DeleteCategory(name)) },
+                () => MainWindow.Current.GoBack());
         }
 
         // ----- Sort -----

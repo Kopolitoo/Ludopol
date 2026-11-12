@@ -591,6 +591,42 @@ namespace Ludopol
             return changed;
         }
 
+        /// <summary>
+        /// Renames a category for all its games. If the new name already exists, the two
+        /// categories become one.
+        /// </summary>
+        public void RenameCategory(string oldName, string newName)
+        {
+            using (SqliteConnection connection = Connect())
+            using (SqliteTransaction transaction = connection.BeginTransaction())
+            {
+                SqliteCommand command = connection.CreateCommand();
+                command.Transaction = transaction;
+                command.CommandText = @"
+                    INSERT OR IGNORE INTO game_categories (game_id, name)
+                        SELECT game_id, $new FROM game_categories WHERE name = $old;
+                    DELETE FROM game_categories WHERE name = $old;";
+                command.Parameters.AddWithValue("$old", oldName);
+                command.Parameters.AddWithValue("$new", newName);
+                command.ExecuteNonQuery();
+                transaction.Commit();
+            }
+            App.Log("Category renamed: \"" + oldName + "\" → \"" + newName + "\"");
+        }
+
+        /// <summary>Removes a category from all its games (the games stay in the catalogue).</summary>
+        public void DeleteCategory(string name)
+        {
+            using (SqliteConnection connection = Connect())
+            {
+                SqliteCommand command = connection.CreateCommand();
+                command.CommandText = "DELETE FROM game_categories WHERE name = $name";
+                command.Parameters.AddWithValue("$name", name);
+                command.ExecuteNonQuery();
+            }
+            App.Log("Category deleted: \"" + name + "\"");
+        }
+
         /// <summary>Writes a game's categories and tags (tags in Steam's order).</summary>
         private static void InsertNames(SqliteConnection connection, SqliteTransaction transaction, Game game)
         {

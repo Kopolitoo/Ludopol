@@ -124,6 +124,46 @@ namespace Ludopol
             Visibility = Visibility.Visible;
         }
 
+        /// <summary>
+        /// Opens the menu to type a text (a new name): an ordinary field (Prunel's keyboard,
+        /// Dragon), and a button that calls done with the text, if it is not empty.
+        /// </summary>
+        public void ShowText(string title, string initial, string okText, Action<string> done)
+        {
+            _title.Text = title;
+            _choices.Children.Clear();
+            TextBox box = new TextBox { Text = initial, VerticalContentAlignment = VerticalAlignment.Center, Margin = new Thickness(12) };
+            box.SetResourceReference(MinHeightProperty, "SmallButtonSize");
+            box.SetResourceReference(WidthProperty, "TextFieldWidth");
+            TileButton ok = new TileButton { Content = okText };
+            ok.SetResourceReference(WidthProperty, "WideButtonWidth");
+            void Validate()
+            {
+                string text = box.Text.Trim();
+                if (text.Length > 0)
+                {
+                    Hide();
+                    done(text);
+                }
+            }
+            ok.Click += (s, e) => Validate();
+            box.KeyDown += (s, e) =>
+            {
+                if (e.Key == System.Windows.Input.Key.Enter)
+                {
+                    Validate();
+                }
+            };
+            _choices.Children.Add(box);
+            _choices.Children.Add(ok);
+            Visibility = Visibility.Visible;
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                System.Windows.Input.Keyboard.Focus(box);
+                box.SelectAll();
+            }), System.Windows.Threading.DispatcherPriority.Input);
+        }
+
         private void AddToggle(string name, HashSet<string> selected) => _choices.Children.Add(Toggle(name, selected));
 
         private static TileButton Toggle(string name, HashSet<string> selected)

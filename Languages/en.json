@@ -170,5 +170,11 @@
   "details.steamLink.ok": "Use this page",
   "details.steamLink.invalid": "No Steam number found in this text. Copy the address of the game's page in the Steam store.",
   "batch.addCategory": "Add a category to these {0} games",
-  "batch.title": "Categories to add to the {0} games of this list"
+  "batch.title": "Categories to add to the {0} games of this list",
+  "category.rename": "Rename this category",
+  "category.rename.title": "New name for \"{0}\"",
+  "category.rename.ok": "Rename",
+  "category.delete": "Delete this category",
+  "category.delete.question": "Delete the category \"{0}\"? Its {1} games stay in the catalogue, without this category.",
+  "category.delete.confirm": "Delete"
 }

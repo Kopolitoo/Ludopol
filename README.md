@@ -96,6 +96,12 @@ plusieurs catégories (existantes ou nouvelles) à tous les jeux affichés. Par 
 en FPS tous les jeux qui ont le tag FPS : Accueil → Tags → FPS, filtrer si besoin, puis ce bouton.
 Rien n'est retiré, sauf « À trier (Steam) » quand une vraie catégorie est donnée.
 
+**Renommer ou supprimer une catégorie** : ouvrir la catégorie (Accueil → Catégories), puis
+« Renommer cette catégorie » ou « Supprimer cette catégorie » sous les filtres. Renommer avec le
+nom d'une catégorie existante réunit les deux. Supprimer retire la catégorie de ses jeux, qui
+restent dans le catalogue. Une image personnelle (dossier Categories) n'est pas renommée avec la
+catégorie. Attention : réimporter la feuille remet les catégories de la feuille.
+
 Les pages Catégories, Tags et Développeurs ont aussi leur nombre et leur tri
 (par nom ou par nombre de jeux ; les tags commencent par les plus utilisés).
 

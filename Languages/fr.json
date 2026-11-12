@@ -170,5 +170,11 @@
   "details.steamLink.ok": "Utiliser cette page",
   "details.steamLink.invalid": "Aucun numéro Steam trouvé dans ce texte. Copiez l'adresse de la page du jeu sur le magasin Steam.",
   "batch.addCategory": "Ajouter une catégorie à ces {0} jeux",
-  "batch.title": "Catégories à ajouter aux {0} jeux de cette liste"
+  "batch.title": "Catégories à ajouter aux {0} jeux de cette liste",
+  "category.rename": "Renommer cette catégorie",
+  "category.rename.title": "Nouveau nom pour « {0} »",
+  "category.rename.ok": "Renommer",
+  "category.delete": "Supprimer cette catégorie",
+  "category.delete.question": "Supprimer la catégorie « {0} » ? Ses {1} jeux restent dans le catalogue, sans cette catégorie.",
+  "category.delete.confirm": "Supprimer"
 }
