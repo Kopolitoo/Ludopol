@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
@@ -44,6 +45,14 @@ namespace Ludopol
             InitializeComponent();
             Current = this;
             ApplyWindowMode();
+            // Once more when the window is on screen: a size set before can be lost.
+            ContentRendered += (s, e) =>
+            {
+                if (!AppSettings.Current.FullScreen)
+                {
+                    WindowState = WindowState.Maximized;
+                }
+            };
             ShowPage(new HomePage());
             PreviewKeyDown += OnPreviewKeyDown;
         }
@@ -121,10 +130,25 @@ namespace Ludopol
             }
             else
             {
-                // An ordinary window, maximised: it fills the screen above the taskbar.
+                // An ordinary window, maximised: it fills the screen above the taskbar. Its normal
+                // size is the work area too (the screen without the taskbar), and the maximising
+                // is done again once Windows has finished changing the frame: done at once, it
+                // can be lost.
                 WindowStyle = WindowStyle.SingleBorderWindow;
                 ResizeMode = ResizeMode.CanResize;
+                Rect work = SystemParameters.WorkArea;
+                Left = work.Left;
+                Top = work.Top;
+                Width = work.Width;
+                Height = work.Height;
                 WindowState = WindowState.Maximized;
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    if (!AppSettings.Current.FullScreen)
+                    {
+                        WindowState = WindowState.Maximized;
+                    }
+                }), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
             }
         }
 

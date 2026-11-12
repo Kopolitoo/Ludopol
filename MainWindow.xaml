@@ -4,7 +4,6 @@
         xmlns:local="clr-namespace:Ludopol"
         Title="Ludopol"
         Width="1600" Height="1000"
-        WindowStartupLocation="CenterScreen"
         Background="{DynamicResource BackgroundBrush}"
         Foreground="{DynamicResource TextBrush}"
         FontFamily="Segoe UI"
