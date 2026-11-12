@@ -90,7 +90,6 @@ namespace Ludopol
 
             _addCategoryButton.SetResourceReference(WidthProperty, "SideButtonWidth");
             _addCategoryButton.SetResourceReference(FontSizeProperty, "SmallFontSize");
-            _addCategoryButton.Margin = new Thickness(12, 36, 12, 12);   // apart from the filters
             _addCategoryButton.Click += OnAddCategoryClick;
             _filters.Children.Add(_addCategoryButton);
 
@@ -112,6 +111,15 @@ namespace Ludopol
                     _filters.Children.Add(button);
                 }
             }
+
+            // Half-height buttons, close together: the whole column fits on the screen.
+            foreach (TileButton button in _filters.Children.OfType<TileButton>())
+            {
+                button.SetResourceReference(MinHeightProperty, "SmallButtonSize");
+                button.Padding = new Thickness(8, 4, 8, 4);
+                button.Margin = new Thickness(12, 4, 12, 4);
+            }
+            _addCategoryButton.Margin = new Thickness(12, 24, 12, 4);   // apart from the filters
 
             foreach (TileButton button in new[] { _sortByButton, _sortOrderButton })
             {
