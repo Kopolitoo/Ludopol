@@ -344,7 +344,7 @@ namespace Ludopol
                 AddActionText(Texts.Get("details.notInstalled"), muted: true);
                 if (game.SteamAppId.HasValue && game.OwnedOnSteam)
                 {
-                    TileButton install = AddAction("details.installWithSteam");
+                    TileButton install = AddAction("details.installWithSteam", SteamIconMark);
                     install.Click += (s, e) => RunAction(() =>
                     {
                         GameLauncher.InstallWithSteam(game);
@@ -356,25 +356,21 @@ namespace Ludopol
             // A game on Steam: its store page (to buy it, or to read about it).
             if (game.SteamAppId.HasValue)
             {
-                TileButton store = AddAction("details.steamStore");
-                store.SetResourceReference(FontSizeProperty, "SmallFontSize");
+                TileButton store = AddAction("details.steamStore", SteamIconMark);
                 store.Click += (s, e) => RunAction(() => GameLauncher.OpenSteamStore(game));
 
                 // Fills what is missing (description, tags…) from the Steam store; replaces nothing.
-                TileButton complete = AddAction("details.completeFromSteam");
-                complete.SetResourceReference(FontSizeProperty, "SmallFontSize");
+                TileButton complete = AddAction("details.completeFromSteam", SteamIconMark);
                 complete.Click += (s, e) => CompleteFromSteamNow(game);
             }
 
             // The Steam page typed by hand: for a game not found on Steam, or linked to the
             // wrong page.
-            TileButton link = AddAction(game.SteamAppId.HasValue ? "details.steamLink.change" : "details.steamLink.add");
-            link.SetResourceReference(FontSizeProperty, "SmallFontSize");
+            TileButton link = AddAction(game.SteamAppId.HasValue ? "details.steamLink.change" : "details.steamLink.add", SteamIconMark, "🌐");
             link.Click += (s, e) => ShowSteamLink(game);
 
             // The image: a file of mine, an Internet address, or Steam's.
-            TileButton image = AddAction("details.image.change");
-            image.SetResourceReference(FontSizeProperty, "SmallFontSize");
+            TileButton image = AddAction("details.image.change", "🖼");
             image.Click += (s, e) => ShowImageMenu(game);
 
             // Choosing a program is for games outside Steam: not offered for a game bought on
@@ -382,14 +378,12 @@ namespace Ludopol
             if (!game.OwnedOnSteam)
             {
                 TileButton choose = AddAction("details.chooseProgram");
-                choose.SetResourceReference(FontSizeProperty, "SmallFontSize");
                 choose.Click += (s, e) => ChooseProgram(game);
             }
             if (!string.IsNullOrEmpty(game.LaunchTarget))
             {
                 AddActionText(Texts.Format("details.program", game.LaunchTarget), muted: true);
                 TileButton forget = AddAction("details.forgetProgram");
-                forget.SetResourceReference(FontSizeProperty, "SmallFontSize");
                 forget.Click += (s, e) => SetProgram(game, null);
             }
 
@@ -466,11 +460,60 @@ namespace Ludopol
             BuildActions(game);
         }
 
-        private TileButton AddAction(string textKey)
+        /// <summary>The Steam icon, to put before a button's text.</summary>
+        private const string SteamIconMark = "steam";
+
+        /// <summary>
+        /// A button under the image: half height, its text after small icons (SteamIconMark for
+        /// Steam's logo, or a symbol such as "🌐"). "Play" stays a big button.
+        /// </summary>
+        private TileButton AddAction(string textKey, params string[] icons)
         {
-            TileButton button = new TileButton { Content = Texts.Get(textKey) };
+            TileButton button = new TileButton();
+            if (textKey == "details.play")
+            {
+                button.Content = Texts.Get(textKey);
+            }
+            else
+            {
+                StackPanel content = new StackPanel { Orientation = Orientation.Horizontal };
+                double size = (double)FindResource("SmallFontSize") * 1.2;
+                foreach (string icon in icons)
+                {
+                    UIElement element = icon == SteamIconMark
+                        ? SteamIcon(size)
+                        : new TextBlock { Text = icon, FontFamily = new FontFamily("Segoe UI Emoji, Segoe UI Symbol"), VerticalAlignment = VerticalAlignment.Center };
+                    ((FrameworkElement)element).Margin = new Thickness(0, 0, 8, 0);
+                    content.Children.Add(element);
+                }
+                content.Children.Add(new TextBlock { Text = Texts.Get(textKey), TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center });
+                button.Content = content;
+                button.SetResourceReference(MinHeightProperty, "SmallButtonSize");
+                button.SetResourceReference(FontSizeProperty, "SmallFontSize");
+                button.Padding = new Thickness(8, 4, 8, 4);
+                button.Margin = new Thickness(0, 4, 0, 4);
+            }
             Actions.Children.Add(button);
             return button;
+        }
+
+        /// <summary>Steam's logo, read from the Steam site like the games' images; the word "Steam" without Internet.</summary>
+        private static UIElement SteamIcon(double size)
+        {
+            ContentControl holder = new ContentControl { Focusable = false, VerticalAlignment = VerticalAlignment.Center };
+            TextBlock word = new TextBlock { Text = "Steam", FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
+            try
+            {
+                BitmapImage logo = new BitmapImage(new Uri("https://store.steampowered.com/favicon.ico"));
+                logo.DownloadFailed += (s, e) => holder.Content = word;
+                holder.Content = new Image { Source = logo, Width = size, Height = size };
+            }
+            catch (Exception ex)
+            {
+                App.Log("Steam logo not shown: " + ex.Message);
+                holder.Content = word;
+            }
+            return holder;
         }
 
         private void AddActionText(string text, bool muted)
@@ -592,20 +635,7 @@ namespace Ludopol
         private UIElement SteamBadge()
         {
             StackPanel badge = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
-            double size = (double)FindResource("BaseFontSize") * 1.2;
-            TextBlock name = new TextBlock { Text = "Steam", FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
-            try
-            {
-                BitmapImage logo = new BitmapImage(new Uri("https://store.steampowered.com/favicon.ico"));
-                Image image = new Image { Source = logo, Width = size, Height = size, VerticalAlignment = VerticalAlignment.Center };
-                logo.DownloadFailed += (s, e) => badge.Children[0] = new TextBlock { Text = name.Text, FontWeight = name.FontWeight, VerticalAlignment = VerticalAlignment.Center };
-                badge.Children.Add(image);
-            }
-            catch (Exception ex)
-            {
-                App.Log("Steam logo not shown: " + ex.Message);
-                badge.Children.Add(name);
-            }
+            badge.Children.Add(SteamIcon((double)FindResource("BaseFontSize") * 1.2));
             badge.Children.Add(new TextBlock
             {
                 Text = "✔",

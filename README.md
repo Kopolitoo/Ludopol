@@ -42,7 +42,7 @@ revient dans Ludopol (après une installation dans Steam, par exemple).
 - **« Jouer »** demande une confirmation (« Oui, jouer » / « Non ») pour qu'un regard ne lance pas
   un jeu par erreur, puis lance le programme choisi s'il y en a un, sinon demande à Steam de
   lancer le jeu.
-- **« Installer avec Steam »** (jeu Steam pas installé) ouvre la fenêtre d'installation de Steam.
+- **« Installer »** (icône Steam) (jeu Steam pas installé) ouvre la fenêtre d'installation de Steam.
 - **« Choisir le programme du jeu… »** : pour un jeu hors Steam, ou pour lancer un jeu Steam
   autrement. On choisit un `.exe` ou un raccourci (`.lnk`, `.url`) ; le jeu compte alors comme
   installé tant que ce fichier existe.
@@ -69,7 +69,7 @@ Les jeux ajoutés depuis Steam sont ensuite complétés depuis le magasin Steam,
 les champs vides sont remplis ; la catégorie reste « À trier (Steam) ». Le bouton « Compléter
 les fiches depuis le magasin Steam » relance cela pour tous les jeux Steam sans description, et
 la fiche d'un tel jeu se complète aussi à son ouverture. Sur la fiche de tout jeu présent sur Steam (acheté ou
-non), « Compléter la fiche depuis Steam » fait de même à la demande.
+non), « Compléter » (icône Steam) fait de même à la demande.
 
 Si Steam ne donne pas la liste : dans Steam, Profil → Modifier le profil → Confidentialité,
 mettre « Détails des jeux » sur Public.
@@ -123,9 +123,10 @@ un champ permet d'en créer une nouvelle, « Terminé » enregistre. Choisir une
 retire « À trier (Steam) ». Attention : réimporter la feuille remet les catégories de la feuille
 pour les jeux qui y sont.
 
-Un jeu Steam pas installé propose « Installer avec Steam » s'il est possédé. Tout jeu présent
-sur Steam a « Voir le jeu sur le magasin Steam » (page dans Steam, ou dans le navigateur sans
-Steam). « Choisir le programme du jeu… » n'est proposé que pour un jeu non possédé sur Steam.
+Un jeu Steam pas installé propose « Installer » s'il est possédé. Tout jeu présent
+sur Steam a « Fiche jeu » (page du magasin Steam dans Steam, ou dans le navigateur sans
+Steam). Les boutons sous l'image sont à mi-hauteur, sauf « Jouer ».
+« Choisir le programme du jeu… » n'est proposé que pour un jeu non possédé sur Steam.
 
 La fiche est faite pour tenir sur un écran : petits boutons, nom de chaque rangée en début de
 ligne, « Testé » et « À publier » en interrupteurs, le nombre de jeux du développeur sur son
@@ -133,10 +134,10 @@ bouton. Pas de prix pour un jeu possédé. Un jeu possédé sur Steam montre le 
 avec une coche verte : c'est une information, mise à jour par la synchronisation (Paramètres →
 Steam).
 
-« Changer l'image… » (sous l'image de la fiche) propose un fichier image (copié dans le dossier
+« Image » (sous l'image de la fiche) propose un fichier image (copié dans le dossier
 Images de Ludopol), l'adresse d'une image sur Internet, ou l'image de Steam pour un jeu lié à Steam.
 
-« Lier à une page Steam… » (ou « Changer la page Steam… ») demande l'adresse de la page du jeu
+« Lien » (icônes Steam et Internet) demande l'adresse de la page du jeu
 sur le magasin Steam, ou son numéro : utile pour un jeu « Introuvable » ou lié à la mauvaise
 page. Le jeu prend ce numéro, ce qui venait de l'ancienne page Steam est effacé (description,
 tags, image…), puis la fiche est complétée depuis le magasin. Mes catégories, notes et remarques
