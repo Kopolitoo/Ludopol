@@ -14,7 +14,13 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <RootNamespace>Ludopol</RootNamespace>
     <AssemblyName>Ludopol</AssemblyName>
+    <!-- The version number (MAJOR.MINOR.PATCH). The installer (Install/Ludopol.iss) takes this
+         same number: Ludopol-0.1.0-setup.exe. -->
     <Version>0.1.0</Version>
+    <!-- The program icon (a small orange ghost): shown by Windows Explorer, the taskbar,
+         Alt+Tab, the shortcuts and the installer. The .ico file holds the same image in several
+         sizes (16 to 256 pixels). The WPF windows that set no icon use this one. -->
+    <ApplicationIcon>Resources\Ludopol.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- Lets the project be compiled on a non-Windows machine too (cloud check only). -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>

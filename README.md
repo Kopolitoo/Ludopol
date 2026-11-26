@@ -157,6 +157,25 @@ Windows (contrôle Windows Forms, comme celle du Bloc-notes) : Dragon y dicte di
 (« Full-Text Control »), ce qu'il ne fait pas dans les champs de WPF. Dans cette page, toutes les
 touches vont au texte ; « Retour » enregistre et rend le clavier à Ludopol.
 
+## Installer
+
+Avec l'installateur `Ludopol-0.1.0-setup.exe` (page « Releases » du dépôt, ou fichier
+« Ludopol-setup » d'une construction automatique) : double-clic, une seule page (case
+« Créer une icône sur le Bureau », cochée), puis « Installer ».
+
+- Ludopol est installé pour l'utilisateur, dans `%LocalAppData%\Programs\Ludopol` : pas besoin
+  d'être administrateur, pas de fenêtre « Voulez-vous autoriser… ».
+- .NET 8 est inclus : rien d'autre à installer.
+- Raccourcis dans le menu Démarrer et (si la case est cochée) sur le Bureau ; désinstallation
+  par Paramètres Windows → Applications.
+- Le catalogue, les réglages et le journal (`%LocalAppData%\Ludopol`) ne sont jamais effacés,
+  ni par une mise à jour, ni par la désinstallation.
+
+Publier une version : onglet « Actions » → « Release » → « Run workflow », taper le numéro
+(par exemple `0.1.0`). GitHub prépare un brouillon dans « Releases » avec l'installateur ; le
+relire puis « Publish release ». Le numéro de version de Ludopol est le `<Version>` de
+`Ludopol.csproj`.
+
 ## Compiler et lancer
 
 1. Ouvrir `Ludopol.slnx` (ou `Ludopol.csproj`) dans Visual Studio 2022, avec la charge de travail
