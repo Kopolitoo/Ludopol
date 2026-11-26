@@ -1,0 +1,99 @@
+# Publishing a version ("release"), as for Prunel.
+#
+# Started by hand: "Actions" tab > "Release" > "Run workflow", type the version number
+# (for example 0.1.0). GitHub then compiles Ludopol on a Windows machine, checks that no
+# personal file is inside, makes the installer Ludopol-0.1.0-setup.exe and prepares a DRAFT
+# release with it. Nothing is public yet: open the "Releases" page, read the draft and click
+# "Publish release". The tag v0.1.0 is created at that moment.
+
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version number, three numbers separated by dots (for example 0.1.0)"
+        required: true
+
+# Write access: needed to create the draft release.
+permissions:
+  contents: write
+
+# Only one release at a time.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    env:
+      VERSION: ${{ inputs.version }}
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Check the version number and the branch
+        shell: pwsh
+        run: |
+          if ($env:VERSION -notmatch '^\d+\.\d+\.\d+$') {
+            Write-Host "::error::'$env:VERSION' is not a version number like 0.1.0"
+            exit 1
+          }
+          if ('${{ github.ref }}' -ne 'refs/heads/main') {
+            Write-Host "::error::A version is published from the main branch only."
+            exit 1
+          }
+
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Check that this version does not exist yet
+        shell: pwsh
+        run: |
+          gh release view "v$env:VERSION" 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "::error::Version $env:VERSION already exists (Releases page)."
+            exit 1
+          }
+          $global:LASTEXITCODE = 0
+
+      - name: Install .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Check the language files
+        shell: pwsh
+        run: ./.github/scripts/check-data-files.ps1
+
+      # The version typed above replaces the <Version> of Ludopol.csproj.
+      - name: Compile Ludopol
+        run: dotnet publish Ludopol.csproj --configuration Release --runtime win-x64 --self-contained true --output bin/publish -p:Version=${{ env.VERSION }} -p:IncludeSourceRevisionInInformationalVersion=false
+
+      - name: Make the installer (Setup.exe)
+        shell: pwsh
+        run: ./.github/scripts/make-setup.ps1 bin/publish $env:VERSION release
+
+      # Personal files (settings with the Steam key, catalogue, log) never ship.
+      - name: Check that no personal file is inside
+        shell: pwsh
+        run: |
+          $forbidden = 'settings.json', '*.db', '*.log'
+          $found = @(Get-ChildItem release, bin/publish -Recurse -Include $forbidden)
+          if ($found) {
+            $found | ForEach-Object { Write-Host "::error::Must not be shipped: $($_.FullName)" }
+            exit 1
+          }
+          Write-Host 'OK: nothing personal in the folder to ship.'
+
+      # The draft lists the pull requests merged since the previous version (--generate-notes).
+      - name: Prepare the draft release
+        shell: pwsh
+        run: |
+          gh release create "v$env:VERSION" "release/Ludopol-$env:VERSION-setup.exe" `
+            --draft `
+            --target "${{ github.sha }}" `
+            --title "Ludopol $env:VERSION" `
+            --generate-notes

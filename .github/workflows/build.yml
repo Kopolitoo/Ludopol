@@ -1,9 +1,11 @@
 # Automatic build (continuous integration, "CI").
 #
 # On every pull request and every push to main, GitHub starts a Windows machine,
-# checks the language files and compiles Ludopol. The result (green tick or red cross)
-# shows on the pull request. The compiled program is kept for 14 days ("Ludopol" artifact
-# of the run), to try a pull request without compiling it: it needs the .NET 8 Desktop Runtime.
+# checks the language files, compiles Ludopol and makes its installer (Setup.exe, with Inno
+# Setup). The result (green tick or red cross) shows on the pull request. The installer is kept
+# for 14 days ("Ludopol-setup" artifact of the run), to try a pull request without compiling
+# it: unzip it and double-click Ludopol-<version>-setup.exe. .NET 8 is inside the program
+# ("self-contained"), nothing else to install.
 
 name: Build
 
@@ -39,12 +41,19 @@ jobs:
         run: ./.github/scripts/check-data-files.ps1
 
       - name: Compile Ludopol
-        run: dotnet publish Ludopol.csproj --configuration Release --runtime win-x64 --self-contained false --output publish
+        run: dotnet publish Ludopol.csproj --configuration Release --runtime win-x64 --self-contained true --output bin/publish
 
-      - name: Keep the compiled program
+      # The installer of this same build. Its version number is the <Version> of Ludopol.csproj.
+      - name: Make the installer (Setup.exe)
+        shell: pwsh
+        run: |
+          $version = ([xml](Get-Content Ludopol.csproj)).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1
+          ./.github/scripts/make-setup.ps1 bin/publish $version bin/setup
+
+      - name: Keep the installer
         if: github.event_name != 'push'
         uses: actions/upload-artifact@v4
         with:
-          name: Ludopol
-          path: publish
+          name: Ludopol-setup
+          path: bin/setup/
           retention-days: 14
